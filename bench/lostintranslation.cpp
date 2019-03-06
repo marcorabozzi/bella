@@ -164,6 +164,6 @@ int main (int argc, char* argv[]) {
     //    ifstream input(B);
     //    diBELLA2PAF(input, filename);
     //}
-
+    std::cout << "\nEnd of program\n" << endl;
     return 0;
 }
