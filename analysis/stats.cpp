@@ -13,7 +13,7 @@ extern "C" {
 }
 #endif
 
-#include "lostintranslation.h"  
+#include "stats.h"  
 #include <omp.h>
 #include <fstream>
 #include <iostream>
