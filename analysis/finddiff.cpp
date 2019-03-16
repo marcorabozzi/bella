@@ -371,74 +371,74 @@ int main(int argc, char const *argv[])
 	}
 	delete [] bytes1;
 
-#pragma omp parallel
-	{
-	#pragma omp for nowait
-		for(uint64_t i = 0; i < n_alignm; i++) 
-		{
-			_myOverlapVector::iterator it;		
-			it = std::find (extrasset.begin(), extrasset.end(), global_alignm[i]);
-
-			if (it == extrasset.end())
-				continue;
-
-			int MYTHREAD = omp_get_thread_num();
-			std::vector<std::string> v = split (lines_overlb[i], '\t');
-
-			// mecat idx to nametag translation 	
-			std::string id1 = idx2read (stoi(v[0]), names);
-			std::string id2 = idx2read (stoi(v[1]), names);
-			std::string ident 	= v[2];
-			std::string start1 	= v[5];
-			std::string end1 	= v[6];
-			std::string len1 	= v[7];
-			std::string start2 	= v[9];
-			std::string end2	= v[10];
-			std::string len2 	= v[11];
-
-			int ovlen = estimate (stoi(start1), stoi(end1), stoi(len1), stoi(start2), stoi(end2), stoi(len2));
-			int score = floor((stod(ident)*ovlen) / 100);
-
-			local_out_m[MYTHREAD] << id1 << "\t" << id2 << "\t" << start1 << "\t" << end1 << "\t" << len1
-				<< "\t" << start2 << "\t" << end2 << "\t" << len2 << "\t" << score << "\t" << ovlen << std::endl;
-		}
-	}
-
-	// write MECAT output to new file 	
-	int64_t * bytes2 = new int64_t[maxt];
-	for(int i = 0; i < maxt; ++i)
-	{
-		local_out_m[i].seekg(0, std::ios::end);
-		bytes2[i] = local_out_m[i].tellg();
-		local_out_m[i].seekg(0, std::ios::beg);
-	}
-	int64_t bytestotal2 = std::accumulate(bytes2, bytes2 + maxt, static_cast<int64_t>(0));
-
-	std::ofstream output2(out_m, std::ios::binary | std::ios::app);
-	std::cout << "Creating or appending to output file with " << (double)bytestotal2/(double)(1024 * 1024) << " MB" << std::endl;
-	output2.seekp(bytestotal2 - 1);
-	/* this will likely create a sparse file so the actual disks won't spin yet */
-	output2.write("", 1); 
-	output2.close();
-
-	#pragma omp parallel
-	{
-		int ithread = omp_get_thread_num(); 
-
-		FILE *ffinal2;
-		/* then everyone fills it */
-		if ((ffinal2 = fopen(out_m, "rb+")) == NULL) 
-		{
-			fprintf(stderr, "File %s failed to open at thread %d\n", out_m, ithread);
-		}
-		int64_t bytesuntil2 = std::accumulate(bytes2, bytes2 + ithread, static_cast<int64_t>(0));
-		fseek (ffinal2, bytesuntil2 , SEEK_SET);
-		std::string text2 = local_out_m[ithread].str();
-		fwrite(text2.c_str(),1, bytes2[ithread], ffinal2);
-		fflush(ffinal2);
-		fclose(ffinal2);
-	}
-	delete [] bytes2;
+//#pragma omp parallel
+//	{
+//	#pragma omp for nowait
+//		for(uint64_t i = 0; i < n_alignm; i++) 
+//		{
+//			_myOverlapVector::iterator it;		
+//			it = std::find (extrasset.begin(), extrasset.end(), global_alignm[i]);
+//
+//			if (it == extrasset.end())
+//				continue;
+//
+//			int MYTHREAD = omp_get_thread_num();
+//			std::vector<std::string> v = split (lines_overlb[i], '\t');
+//
+//			// mecat idx to nametag translation 	
+//			std::string id1 = idx2read (stoi(v[0]), names);
+//			std::string id2 = idx2read (stoi(v[1]), names);
+//			std::string ident 	= v[2];
+//			std::string start1 	= v[5];
+//			std::string end1 	= v[6];
+//			std::string len1 	= v[7];
+//			std::string start2 	= v[9];
+//			std::string end2	= v[10];
+//			std::string len2 	= v[11];
+//
+//			int ovlen = estimate (stoi(start1), stoi(end1), stoi(len1), stoi(start2), stoi(end2), stoi(len2));
+//			int score = floor((stod(ident)*ovlen) / 100);
+//
+//			local_out_m[MYTHREAD] << id1 << "\t" << id2 << "\t" << start1 << "\t" << end1 << "\t" << len1
+//				<< "\t" << start2 << "\t" << end2 << "\t" << len2 << "\t" << score << "\t" << ovlen << std::endl;
+//		}
+//	}
+//
+//	// write MECAT output to new file 	
+//	int64_t * bytes2 = new int64_t[maxt];
+//	for(int i = 0; i < maxt; ++i)
+//	{
+//		local_out_m[i].seekg(0, std::ios::end);
+//		bytes2[i] = local_out_m[i].tellg();
+//		local_out_m[i].seekg(0, std::ios::beg);
+//	}
+//	int64_t bytestotal2 = std::accumulate(bytes2, bytes2 + maxt, static_cast<int64_t>(0));
+//
+//	std::ofstream output2(out_m, std::ios::binary | std::ios::app);
+//	std::cout << "Creating or appending to output file with " << (double)bytestotal2/(double)(1024 * 1024) << " MB" << std::endl;
+//	output2.seekp(bytestotal2 - 1);
+//	/* this will likely create a sparse file so the actual disks won't spin yet */
+//	output2.write("", 1); 
+//	output2.close();
+//
+//	#pragma omp parallel
+//	{
+//		int ithread = omp_get_thread_num(); 
+//
+//		FILE *ffinal2;
+//		/* then everyone fills it */
+//		if ((ffinal2 = fopen(out_m, "rb+")) == NULL) 
+//		{
+//			fprintf(stderr, "File %s failed to open at thread %d\n", out_m, ithread);
+//		}
+//		int64_t bytesuntil2 = std::accumulate(bytes2, bytes2 + ithread, static_cast<int64_t>(0));
+//		fseek (ffinal2, bytesuntil2 , SEEK_SET);
+//		std::string text2 = local_out_m[ithread].str();
+//		fwrite(text2.c_str(),1, bytes2[ithread], ffinal2);
+//		fflush(ffinal2);
+//		fclose(ffinal2);
+//	}
+//	delete [] bytes2;
 
 	return 0;
 }
