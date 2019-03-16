@@ -269,6 +269,7 @@ int main(int argc, char const *argv[])
 	_myOverlapVector diff1(n_alignb*2);		
 	_myOverlapVector::iterator it1;	
 
+	// BELLA output meno MECAT output ==> Overlaps in BELLA not in MECAT
 	it1 = std::set_difference (global_alignb.begin(), global_alignb.end(), 
 							   global_alignm.begin(), global_alignm.end(), 
 							   diff1.begin());
@@ -279,6 +280,7 @@ int main(int argc, char const *argv[])
 	_myOverlapVector extras(n_alignm*2);	
 	_myOverlapVector::iterator it2;	
 
+	// MECAT output meno BELLA output ==> Overlaps in MECAT not in BELLA
 	it2 = std::set_difference (global_alignm.begin(), global_alignm.end(), 
 							   global_alignb.begin(), global_alignb.end(), 
 							   extras.begin());
@@ -297,8 +299,8 @@ int main(int argc, char const *argv[])
 	_myOverlapVector extrasset(extras.size());
 	_myOverlapVector::iterator it3;
 
-	it3 = std::set_intersection(global_overlb.begin(), global_overlb.end(),
-						  extras.begin(), extras.end(),
+	// Overlaps in MECAT not in BELLA AND Overlap in BELLA before alignment 	
+	it3 = std::set_intersection(extras.begin(), extras.end(), global_overlb.begin(), global_overlb.end(),
 						  extrasset.begin()); //	container that supports a push_back operation
 
 	extrasset.resize(it3-extrasset.begin());
@@ -346,7 +348,7 @@ int main(int argc, char const *argv[])
 	int64_t bytestotal1 = std::accumulate(bytes1, bytes1 + maxt, static_cast<int64_t>(0));
 
 	std::ofstream output1(out_b, std::ios::binary | std::ios::app);
-	cout << "Creating or appending to output file with " << (double)bytestotal1/(double)(1024 * 1024) << " MB" << endl;
+	std::cout << "Creating or appending to output file with " << (double)bytestotal1/(double)(1024 * 1024) << " MB" << std::endl;
 	output1.seekp(bytestotal1 - 1);
 	/* this will likely create a sparse file so the actual disks won't spin yet */
 	output1.write("", 1); 
