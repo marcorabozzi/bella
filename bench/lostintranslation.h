@@ -172,7 +172,7 @@ void BELLA2PAF(ifstream& input, char* filename)
 		std::string& endpV = v[7]; 
 		std::string& lengV = v[8]; 
 		std::string& begpH = v[9]; 
-		std::string& endpH = v[10]; 
+		std::string& endpH = v[10];  
 		std::string& lengH = v[11];
 
 		/* change strand formatting */
@@ -181,8 +181,8 @@ void BELLA2PAF(ifstream& input, char* filename)
 
 		/* compute overlap length if missing (begpV, endpV, lenV, begpH, endpH, lenH) */
 		//int ovlen = estimate (stoi(begpV), stoi(endpV), stoi(lengV), stoi(begpH), stoi(endpH), stoi(lengH));
-		int matches = floor((stoi(ovlen) + stoi(score))/2); // we might need to lower down this a bit    
-		//int matches = floor(.8 * stoi(score)); // we might need to lower down this a bit    
+		//int matches = floor((stoi(ovlen) + stoi(score))/2); // we might need to lower down this a bit    
+		int matches = floor(.8 * stoi(ovlen)); // we might need to lower down this a bit    
 
 		local[ithread] << nameV << "\t" << lengV << "\t" << begpV << "\t" << endpV << "\t" << isRev 
 			<< "\t" << nameH << "\t" << lengH << "\t" << begpH << "\t" << endpH << "\t" << matches 

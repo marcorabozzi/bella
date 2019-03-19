@@ -410,7 +410,7 @@ double estimateMemory(const BELLApars & b_pars)
 	return free_memory;
 }
 
-void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
+void PostAlignDecision(const spmatPtr_& val, const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
 					const BELLApars & b_pars, double ratioPhi, int count, stringstream & myBatch, size_t & outputted,
 					size_t & numBasesAlignedTrue, size_t & numBasesAlignedFalse, bool & passed)
 {
@@ -435,10 +435,11 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	int minLeft = min(begpV, begpH);
 	int minRight = min(read2len - endpV, read1len - endpH);
 	int ov = minLeft+minRight+(diffCol+diffRow)/2;
+	double newThr;
 
 	if(b_pars.adapThr)
 	{
-		double newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
+		newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
 
 		if((double)maxExtScore.score > newThr)
 		{
@@ -471,7 +472,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		if(!b_pars.outputPaf)  // BELLA output format
 		{
 			/* field adjustment to match the PAF format */
-			toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
+			//toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
 			/* re-compute overlap estimation with extended alignment to the edges */
 			diffCol = endpV - begpV;
 			diffRow = endpH - begpH;
@@ -479,8 +480,16 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 			minRight = min(read2len - endpV, read1len - endpH);
 			ov = minLeft+minRight+(diffCol+diffRow)/2;
 
+			// second, (possibly) convert back the seqH seed position according to the original strand 
+			if(maxExtScore.strand == "c")
+			{
+				size_t temp = begpH;
+				begpH = read1len-endpH;
+				endpH = read1len-temp;
+			}
+
 			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
-				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
+				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << '\t' << (int)newThr << endl;
 				// column seq name
 				// row seq name
 				// number of shared k-mer
@@ -493,6 +502,12 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 				// row seq start
 				// row seq end
 				// row seq length
+
+			// GGGG: necessary for LOGAN test 	
+			// auto it = val->pos.begin();
+			// int i = it->first, j = it->second;
+			// format: seqV, posV, seqH, posH, strand -- GGGG: generate this input with BELLA
+			//myBatch << read2.seq << '\t' << j << '\t' << read1.seq << '\t' << i << '\t' << maxExtScore.strand << endl;
 		}
 		else    // PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
 		{
@@ -595,7 +610,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 					int i = it->first, j = it->second;
 
 					maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
-					PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+					PostAlignDecision(val, maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
 				}
 				else
 				{
@@ -604,7 +619,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 						int i = it->first, j = it->second;
 
 						maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
-						PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+						PostAlignDecision(val, maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
 
 						if(passed)
 							break;
