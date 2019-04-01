@@ -61,10 +61,6 @@ int main(int argc, char const *argv[])
 	std::ifstream file3(argv[3]);	// bella overlap
 	std::ifstream file4(argv[4]);	// mecat alignment
 
-	int category1 = 0;	// not present 
-	int category2 = 0;	// not present in alignment as score is too off 
-	int category3 = 0;	// present but it does not help assembly 
-
 	int maxt = 1;
 #pragma omp parallel
 	{
@@ -167,6 +163,134 @@ int main(int argc, char const *argv[])
 	}
 
 	std::cout << "num spanning pair : " << span.size() << std::endl;
+
+	uint64_t numalignment2 = std::count(std::istreambuf_iterator<char>(file2), std::istreambuf_iterator<char>(), '\n');
+	file2.seekg(0,std::ios_base::beg);
+	std::vector<std::string> lines2;
+
+	uint64_t numoverlap3 = std::count(std::istreambuf_iterator<char>(file3), std::istreambuf_iterator<char>(), '\n');
+	file3.seekg(0,std::ios_base::beg);
+	std::vector<std::string> lines3;
+
+	uint64_t numalignment4 = std::count(std::istreambuf_iterator<char>(file4), std::istreambuf_iterator<char>(), '\n');
+	file4.seekg(0,std::ios_base::beg);
+	std::vector<std::string> lines4;
+
+	// read bella alignment
+	if(file2)
+		for (int i = 0; i < numalignment2; ++i)
+		{
+			std::string line;
+			std::getline(file2, line);
+			lines2.push_back(line);
+		}
+	file2.close();
+
+	// read bella overlap
+	if(file3)
+		for (int i = 0; i < numoverlap3; ++i)
+		{
+			std::string line;
+			std::getline(file3, line);
+			lines3.push_back(line);
+		}
+	file3.close();
+
+	// read mecat aligment
+	if(file4)
+		for (int i = 0; i < numalignment4; ++i)
+		{
+			std::string line;
+			std::getline(file4, line);
+			lines4.push_back(line);
+		}
+	file4.close();
+
+	std::vector<std::stringstream> local3(maxt);   // not present in bella
+	std::vector<std::stringstream> local4(maxt);   // not present in bella alignment as score is too off 
+	std::vector<std::stringstream> local5(maxt);   // present in bella but it does not help assembly 
+	std::vector<std::stringstream> local6(maxt);   // present in mecat
+
+	int category1 = 0;	// not present 
+	int category2 = 0;	// not present in alignment as score is too off 
+	int category3 = 0;	// present but it does not help assembly 
+
+#pragma omp parallel
+	{
+	#pragma omp for nowait
+		for(uint64_t i = 0; i < numalignment2; i++) // bella alignment   	
+		{
+			int tid = omp_get_thread_num();
+			std::vector<std::string> v = split (lines1[i], '\t');
+			std::string id1 = v[0]; 	
+			std::string id2 = v[1];	
+			// get more information from the output
+			std::pair<std::string, std::string> mypair = make_pair(id1, id2);
+			auto it = span.find(mypair);
+
+			if(it == span.end())
+			{
+				mypair = make_pair(id2, id1);
+				it = span.find(mypair);
+				if(it != span.end())
+					local3[tid] << 3 << '\t' << id2 << '\t' << id1 << std::endl; // present in bella but it does not help assembly 
+			}
+			else
+			{
+				local3[tid] << 3 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella but it does not help assembly 
+			}
+		}
+
+	#pragma omp for nowait
+		for(uint64_t i = 0; i < numalignment2; i++) // bella overlap 	
+		{
+			int tid = omp_get_thread_num();
+			std::vector<std::string> v = split (lines1[i], '\t');
+			std::string id1 = v[0]; 	
+			std::string id2 = v[1];	
+			// get more information from the output
+			std::pair<std::string, std::string> mypair = make_pair(id1, id2);
+			auto it = span.find(mypair);
+
+			if(it == span.end())
+			{
+				mypair = make_pair(id2, id1);
+				it = span.find(mypair);
+				if(it != span.end()) // to be fixed here 
+					local4[tid] << 2 << '\t' << id2 << '\t' << id1 << std::endl; // present in bella overlap if score < add here
+				else
+					local5[tid] << 1 << '\t' << id2 << '\t' << id1 << std::endl; // not present in bella
+			}
+			else
+			{
+				local4[tid] << 2 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella overlap if score < add here
+			}
+		}
+	#pragma omp for nowait
+		for(uint64_t i = 0; i < numalignment2; i++) // bella alignment   	
+		{
+			int tid = omp_get_thread_num();
+			std::vector<std::string> v = split (lines1[i], '\t');
+			std::string id1 = v[0]; 	
+			std::string id2 = v[5];	// double check paf indexing
+			// get more information from the output
+			std::pair<std::string, std::string> mypair = make_pair(id1, id2);
+			auto it = span.find(mypair);
+
+			if(it == span.end())
+			{
+				mypair = make_pair(id2, id1);
+				it = span.find(mypair);
+				if(it != span.end())
+					local6[tid] << 4 << '\t' << id2 << '\t' << id1 << std::endl; // present in mecat
+			}
+			else
+			{
+				local6[tid] << 4 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in mecat
+			}
+		}
+	}
+
 
 	return 0;
 }
