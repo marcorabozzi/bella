@@ -5,7 +5,7 @@
 //=======================================================================
 
 // Compile: g++ -std=c++14 -g -march=native -fopenmp -fpermissive -O3 spanningRead.cpp -o span
-// Run: ./span <read-to-contig> 
+// Run: ./span <read-to-contig> <bella-output-alignment> <bella-output-overlap> <mecat-output>
 
 #include <iostream>
 #include <cstdio>
@@ -57,6 +57,13 @@ std::vector<std::string> split (const std::string &s, char delim)
 int main(int argc, char const *argv[])
 {
 	std::ifstream file1(argv[1]);	// read to contig
+	std::ifstream file2(argv[2]);	// bella alignment
+	std::ifstream file3(argv[3]);	// bella overlap
+	std::ifstream file4(argv[4]);	// mecat alignment
+
+	int category1 = 0;	// not present 
+	int category2 = 0;	// not present in alignment as score is too off 
+	int category3 = 0;	// present but it does not help assembly 
 
 	int maxt = 1;
 #pragma omp parallel
