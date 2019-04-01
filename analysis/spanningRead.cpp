@@ -215,13 +215,17 @@ int main(int argc, char const *argv[])
 	int category2 = 0;	// not present in alignment as score is too off 
 	int category3 = 0;	// present but it does not help assembly 
 
+	std::cout << "numalignment2 : " << numalignment2 << std::endl;
+	std::cout << "numoverlap3 : " << numoverlap3 << std::endl;
+	std::cout << "numalignment4 : " << numalignment4 << std::endl;
+
 #pragma omp parallel
 	{
 	#pragma omp for nowait
 		for(uint64_t i = 0; i < numalignment2; i++) // bella alignment   	
 		{
 			int tid = omp_get_thread_num();
-			std::vector<std::string> v = split (lines1[i], '\t');
+			std::vector<std::string> v = split (lines2[i], '\t');
 			std::string id1 = v[0]; 	
 			std::string id2 = v[1];	
 			// get more information from the output
@@ -240,18 +244,16 @@ int main(int argc, char const *argv[])
 				local3[tid] << 3 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella but it does not help assembly 
 			}
 		}
-
 	#pragma omp for nowait
-		for(uint64_t i = 0; i < numalignment2; i++) // bella overlap 	
+		for(uint64_t i = 0; i < numoverlap3; i++) // bella overlap 	
 		{
 			int tid = omp_get_thread_num();
-			std::vector<std::string> v = split (lines1[i], '\t');
+			std::vector<std::string> v = split (lines3[i], '\t');
 			std::string id1 = v[0]; 	
 			std::string id2 = v[1];	
 			// get more information from the output
 			std::pair<std::string, std::string> mypair = make_pair(id1, id2);
 			auto it = span.find(mypair);
-
 			if(it == span.end())
 			{
 				mypair = make_pair(id2, id1);
@@ -267,16 +269,15 @@ int main(int argc, char const *argv[])
 			}
 		}
 	#pragma omp for nowait
-		for(uint64_t i = 0; i < numalignment2; i++) // bella alignment   	
+		for(uint64_t i = 0; i < numalignment4; i++) // bella alignment   	
 		{
 			int tid = omp_get_thread_num();
-			std::vector<std::string> v = split (lines1[i], '\t');
+			std::vector<std::string> v = split (lines4[i], '\t');
 			std::string id1 = v[0]; 	
-			std::string id2 = v[5];	// double check paf indexing
+			std::string id2 = v[5];
 			// get more information from the output
 			std::pair<std::string, std::string> mypair = make_pair(id1, id2);
 			auto it = span.find(mypair);
-
 			if(it == span.end())
 			{
 				mypair = make_pair(id2, id1);
@@ -290,7 +291,5 @@ int main(int argc, char const *argv[])
 			}
 		}
 	}
-
-
 	return 0;
 }
