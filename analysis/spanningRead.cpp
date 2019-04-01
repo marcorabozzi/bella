@@ -5,8 +5,8 @@
 //=======================================================================
 
 // Compile: g++ -std=c++14 -g -march=native -fopenmp -fpermissive -O3 spanningRead.cpp -o span
-// Run: ./span <read-to-contig> <bella-output-alignment> <bella-output-overlap> <mecat-output>
-
+// Run: ./span <read-to-contig> <bella-output-alignment> <bella-output-overlap> <mecat-output> <output-filename>
+ 
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -17,6 +17,7 @@
 #include <string>
 #include <stdlib.h>
 #include <algorithm>
+#include <numeric>
 #include <utility>
 #include <array>
 #include <tuple>
@@ -60,6 +61,7 @@ int main(int argc, char const *argv[])
 	std::ifstream file2(argv[2]);	// bella alignment
 	std::ifstream file3(argv[3]);	// bella overlap
 	std::ifstream file4(argv[4]);	// mecat alignment
+	const char* out = argv[5];		// output name
 
 	int maxt = 1;
 #pragma omp parallel
@@ -206,18 +208,11 @@ int main(int argc, char const *argv[])
 		}
 	file4.close();
 
-	std::vector<std::stringstream> local3(maxt);   // not present in bella
-	std::vector<std::stringstream> local4(maxt);   // not present in bella alignment as score is too off 
-	std::vector<std::stringstream> local5(maxt);   // present in bella but it does not help assembly 
-	std::vector<std::stringstream> local6(maxt);   // present in mecat
+	std::vector<std::stringstream> local3(maxt);   
 
 	int category1 = 0;	// not present 
 	int category2 = 0;	// not present in alignment as score is too off 
-	int category3 = 0;	// present but it does not help assembly 
-
-	std::cout << "numalignment2 : " << numalignment2 << std::endl;
-	std::cout << "numoverlap3 : " << numoverlap3 << std::endl;
-	std::cout << "numalignment4 : " << numalignment4 << std::endl;
+	int category3 = 0;	// present but it does not help assembly 	
 
 #pragma omp parallel
 	{
@@ -242,7 +237,7 @@ int main(int argc, char const *argv[])
 			else
 			{
 				local3[tid] << 3 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella but it does not help assembly 
-			}
+			} // 76
 		}
 	#pragma omp for nowait
 		for(uint64_t i = 0; i < numoverlap3; i++) // bella overlap 	
@@ -259,14 +254,14 @@ int main(int argc, char const *argv[])
 				mypair = make_pair(id2, id1);
 				it = span.find(mypair);
 				if(it != span.end()) // to be fixed here 
-					local4[tid] << 2 << '\t' << id2 << '\t' << id1 << std::endl; // present in bella overlap if score < add here
-				else
-					local5[tid] << 1 << '\t' << id2 << '\t' << id1 << std::endl; // not present in bella
+					local3[tid] << 2 << '\t' << id2 << '\t' << id1 << std::endl; // present in bella overlap if score < add here
+				//else
+				//	local3[tid] << 1 << '\t' << id2 << '\t' << id1 << std::endl; // not present in bella
 			}
 			else
 			{
-				local4[tid] << 2 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella overlap if score < add here
-			}
+				local3[tid] << 2 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in bella overlap if score < add here
+			} // 106
 		}
 	#pragma omp for nowait
 		for(uint64_t i = 0; i < numalignment4; i++) // bella alignment   	
@@ -283,13 +278,48 @@ int main(int argc, char const *argv[])
 				mypair = make_pair(id2, id1);
 				it = span.find(mypair);
 				if(it != span.end())
-					local6[tid] << 4 << '\t' << id2 << '\t' << id1 << std::endl; // present in mecat
+					local3[tid] << 4 << '\t' << id2 << '\t' << id1 << std::endl; 	// present in mecat
 			}
 			else
 			{
-				local6[tid] << 4 << '\t' << id1 << '\t' << id2 << std::endl; 	// present in mecat
+				local3[tid] << 4 << '\t' << id1 << '\t' << id2 << std::endl; 		// present in mecat
 			}
-		}
+		} // 150
 	}
+
+	int64_t * bytes2 = new int64_t[maxt];
+	for(int i = 0; i < maxt; ++i)
+	{
+		local3[i].seekg(0, std::ios::end);
+		bytes2[i] = local3[i].tellg();
+		local3[i].seekg(0, std::ios::beg);
+	}
+	int64_t bytestotal2 = std::accumulate(bytes2, bytes2 + maxt, static_cast<int64_t>(0));
+
+	std::ofstream output2(out, std::ios::binary | std::ios::app);
+	std::cout << "Creating or appending to output file with " << (double)bytestotal2/(double)(1024 * 1024) << " MB" << std::endl;
+	output2.seekp(bytestotal2 - 1);
+	/* this will likely create a sparse file so the actual disks won't spin yet */
+	output2.write("", 1); 
+	output2.close();
+
+	#pragma omp parallel
+	{
+		int ithread = omp_get_thread_num(); 
+
+		FILE *ffinal2;
+		/* then everyone fills it */
+		if ((ffinal2 = fopen(out, "rb+")) == NULL) 
+		{
+			fprintf(stderr, "File %s failed to open at thread %d\n", out, ithread);
+		}
+		int64_t bytesuntil2 = std::accumulate(bytes2, bytes2 + ithread, static_cast<int64_t>(0));
+		fseek (ffinal2, bytesuntil2 , SEEK_SET);
+		std::string text2 = local3[ithread].str();
+		fwrite(text2.c_str(),1, bytes2[ithread], ffinal2);
+		fflush(ffinal2);
+		fclose(ffinal2);
+	}
+	delete [] bytes2;
 	return 0;
 }
