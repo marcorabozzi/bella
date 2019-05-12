@@ -1,12 +1,10 @@
 #ifndef _ALIGNMENT_H_
 #define _ALIGNMENT_H_
 
-#include <seqan/sequence.h>
-#include <seqan/align.h>
-#include <seqan/score.h>
-#include <seqan/modifier.h>
-#include <seqan/seeds.h>
 #include "common.h"
+#include "../logan/src/simd/score.h"
+#include "../logan/src/simd/simd_utils.h"
+#include "../logan/src/simd/logan_xa.h"
 #include <omp.h>
 #include <fstream>
 #include <iostream>
@@ -24,33 +22,49 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-using namespace seqan;
 using namespace std;
 
 double adaptiveSlope(double error)
 {
-    double p_mat = pow(1-error,2);  // match
-    double p_mis = 1-p_mat;         // mismatch/gap
-    double alpha = 1;               // match penalty
-    double beta = 1;                // mismatch/gap penalty
+	double p_mat = pow(1-error,2);  // match
+	double p_mis = 1-p_mat;         // mismatch/gap
+	double alpha = 1;               // match penalty
+	double beta = 1;                // mismatch/gap penalty
 
-    return alpha*p_mat - beta*p_mis;
+	return alpha*p_mat - beta*p_mis;
 }
 
 bool toEnd(int colStart, int colEnd, int colLen, int rowStart, int rowEnd, int rowLen, int relaxMargin)
 {
-    int minLeft = min(colStart, rowStart);
-    int minRight = min(colLen-colEnd, rowLen-rowEnd);
+	int minLeft = min(colStart, rowStart);
+	int minRight = min(colLen-colEnd, rowLen-rowEnd);
 
-     if(minLeft-relaxMargin <= 0)
-        minLeft = 0;
-     if(minRight-relaxMargin <= 0)
-        minRight = 0;
+	 if(minLeft-relaxMargin <= 0)
+		minLeft = 0;
+	 if(minRight-relaxMargin <= 0)
+		minRight = 0;
 
-     if((minLeft == 0 || minRight == 0))
-        return true;
-    else
-        return false;
+	 if((minLeft == 0 || minRight == 0))
+		return true;
+	else
+		return false;
+}
+
+char revComplement(char n)
+{
+	switch(n)
+	{
+	case 'A':
+		return 'T';
+	case 'T':
+		return 'A';
+	case 'G':
+		return 'C';
+	case 'C':
+		return 'G';
+	}
+	assert(false);
+	return ' ';
 }
 
 /**
@@ -63,50 +77,50 @@ bool toEnd(int colStart, int colEnd, int colLen, int rowStart, int rowEnd, int r
  * @param xdrop
  * @return alignment score and extended seed
  */
-seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
+loganResult alignLogan(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
 
-    Score<int, Simple> scoringScheme(1,-1,-1);
+	ScoringSchemeL scoringScheme(1,-1,-1);
 
-    Dna5String seqH(row); 
-    Dna5String seqV(col); 
-    Dna5String seedH;
-    Dna5String seedV;
-    string strand;
-    int longestExtensionTemp;
-    seqAnResult longestExtensionScore;
+	std::string seedH = row.substr(i, kmer_len);
+	std::string seedV = col.substr(j, kmer_len);
+	std::string strand;
 
+	std::pair<int, int> temp;
+	loganResult result;
+	TSeed seed(i, j, i + kmer_len, j + kmer_len);
 
-    TSeed seed(i, j, i+kmer_len, j+kmer_len);
-    seedH = infix(seqH, beginPositionH(seed), endPositionH(seed));
-    seedV = infix(seqV, beginPositionV(seed), endPositionV(seed));
+	if(seedH != seedV)
+	{
+		strand = 'c';
+		// reverse complement horizonatal sequence and update its seed position
+		std::string rev; // new string not to modify the original one
+		std::transform(
+			std::begin(row),
+			std::end(row),
+			std::begin(rev),
+		revComplement);
+		i = row.length() - i - kmer_len;
 
-    /* we are reversing the "row", "col" is always on the forward strand */
-    Dna5StringReverseComplement twin(seedH);
+		setBeginPositionH(seed, i);
+		setBeginPositionV(seed, j);
+		setEndPositionH(seed, i + kmer_len);
+		setEndPositionV(seed, j + kmer_len);
 
-    if(twin == seedV)
-    {
-        strand = 'c';
-        Dna5StringReverseComplement twinRead(seqH);
-        i = rlen-i-kmer_len;
-        
-        setBeginPositionH(seed, i);
-        setBeginPositionV(seed, j);
-        setEndPositionH(seed, i+kmer_len);
-        setEndPositionV(seed, j+kmer_len);
+		// perform alignment
+		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, rev, col, scoringScheme, xdrop);
 
-        /* Perform match extension */
-        longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+	}
+	else
+	{
+		strand = 'n';
+		// perform alignment
+		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, row, col, scoringScheme, xdrop);
+	} 
 
-    } else
-    {
-        strand = 'n';
-        longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
-    } 
-
-    longestExtensionScore.score = longestExtensionTemp;
-    longestExtensionScore.seed = seed;
-    longestExtensionScore.strand = strand;
-    return longestExtensionScore;
+	result.score = temp;
+	result.seed = seed;
+	result.strand = strand;
+	return result;
 }
 
 #endif

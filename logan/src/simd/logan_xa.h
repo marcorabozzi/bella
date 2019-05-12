@@ -4,6 +4,9 @@
 // Date:   22 April 2019
 //==================================================================
 
+#ifndef LOGANXA_H
+#define LOGANXA_H
+
 #include<vector>
 #include<iostream>
 #include<omp.h>
@@ -477,3 +480,4 @@ LoganXDrop
 		return extLeft + extRight;
 	}
 }
+#endif

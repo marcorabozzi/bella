@@ -4,6 +4,9 @@
 // Date:   30 April 2019
 //==================================================================
 
+#ifndef LOGANGA_H
+#define LOGANGA_H
+
 #include<vector>
 #include<iostream>
 #include<omp.h>
@@ -369,3 +372,5 @@ LoganGlobal
 
 	return std::make_pair(best, antiDiagBest);
 }
+
+#endif
