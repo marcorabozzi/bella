@@ -93,13 +93,13 @@ loganResult alignLogan(const std::string & row, const std::string & col, int rle
 	{
 		strand = 'c';
 		// reverse complement horizonatal sequence and update its seed position
-		std::string rev; // new string not to modify the original one
+		std::string cpyrow = row; // new string not to modify the original one
 		std::transform(
-			std::begin(row),
-			std::end(row),
-			std::begin(rev),
+			cpyrow.begin(),
+			cpyrow.end(),
+			cpyrow.begin(),
 		revComplement);
-		i = row.length() - i - kmer_len;
+		i = cpyrow.length() - i - kmer_len;
 
 		setBeginPositionH(seed, i);
 		setBeginPositionV(seed, j);
@@ -107,7 +107,11 @@ loganResult alignLogan(const std::string & row, const std::string & col, int rle
 		setEndPositionV(seed, j + kmer_len);
 
 		// perform alignment
-		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, rev, col, scoringScheme, xdrop);
+		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, cpyrow, col, scoringScheme, xdrop);
+	#pragma omp critical
+		{
+		printf("%d %d %d %d\n", temp.first, temp.second, getBeginPositionV(seed), getEndPositionV(seed));
+		}
 
 	}
 	else

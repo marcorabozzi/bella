@@ -58,7 +58,7 @@ LoganOneDirection
 	// PHASE I (initial values load using dynamic programming)
 	//======================================================================================
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	printf("Phase I\n");
 #endif
 	// we need one more space for the off-grid values and one more space for antiDiag2
@@ -86,7 +86,7 @@ LoganOneDirection
 			phase1_data[i][j] = std::max(onef, twof);
 		}
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	// print phase1_data[][]
 	for(int i = 1; i < LOGICALWIDTH + 2; i++)
 	{
@@ -140,14 +140,14 @@ LoganOneDirection
 	short antiDiagBest = antiDiagNo * gapCost;
 	short best = 0;
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	printf("Phase II\n");
 #endif
 
 	while(hoffset < hlength && voffset < vlength)
 	{
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	printf("\n");
 	print_vector_c(vqueryh.simd);
 	print_vector_c(vqueryv.simd);
@@ -163,7 +163,7 @@ LoganOneDirection
 		m = blendv_func (vmismatchCost, vmatchCost, m);
 		vector_t antiDiag1F = add_func (m, antiDiag1.simd);
 
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag1: ");
 		print_vector_d(antiDiag1.simd);
 		printf("antiDiag1F: ");
@@ -172,23 +172,23 @@ LoganOneDirection
 
 		// antiDiag2S (shift)
 		vector_union_t antiDiag2S = leftShift (antiDiag2);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2S: ");
 		print_vector_d(antiDiag2S.simd);
 	#endif
 		// antiDiag2M (pairwise max)
 		vector_t antiDiag2M = max_func (antiDiag2S.simd, antiDiag2.simd);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2M: ");
 		print_vector_d(antiDiag2M);
 	#endif
 		// antiDiag2F (final)
 		vector_t antiDiag2F = add_func (antiDiag2M, vgapCost);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2F: ");
 		print_vector_d(antiDiag2F);
 	#endif
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2: ");
 		print_vector_d(antiDiag2.simd);
 	#endif
@@ -196,7 +196,7 @@ LoganOneDirection
 		antiDiag3.simd = max_func (antiDiag1F, antiDiag2F);
 		// we need to have always antiDiag3 left-aligned
 		antiDiag3.elem[LOGICALWIDTH] = NINF;
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag3: ");
 		print_vector_d(antiDiag3.simd);
 	#endif
@@ -226,14 +226,14 @@ LoganOneDirection
 		if(maxpos > MIDDLE)
 		//if(antiDiag3.elem[MIDDLE] < antiDiag3.elem[MIDDLE + 1])
 		{
-			#ifdef DEBUG
+			#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
 			#endif
 			moveRight (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
 		else
 		{
-			#ifdef DEBUG
+			#ifdef DEBUGLOGAN
 			printf("myDOWN\n");
 			#endif
 			moveDown (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
@@ -246,14 +246,14 @@ LoganOneDirection
 
 	int dir = hoffset >= hlength ? myDOWN : myRIGHT;
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	printf("Phase III\n");
 #endif
 
 	while(hoffset < hlength || voffset < vlength)
 	{
 
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("\n");
 		print_vector_c(vqueryh.simd);
 		print_vector_c(vqueryv.simd);
@@ -268,7 +268,7 @@ LoganOneDirection
 		m = blendv_func (vmismatchCost, vmatchCost, m);
 		vector_t antiDiag1F = add_func (m, antiDiag1.simd);
 
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag1: ");
 		print_vector_d(antiDiag1.simd);
 		printf("antiDiag1F: ");
@@ -277,23 +277,23 @@ LoganOneDirection
 
 		// antiDiag2S (shift)
 		vector_union_t antiDiag2S = leftShift (antiDiag2);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2S: ");
 		print_vector_d(antiDiag2S.simd);
 	#endif
 		// antiDiag2M (pairwise max)
 		vector_t antiDiag2M = max_func (antiDiag2S.simd, antiDiag2.simd);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2M: ");
 		print_vector_d(antiDiag2M);
 	#endif
 		// antiDiag2F (final)
 		vector_t antiDiag2F = add_func (antiDiag2M, vgapCost);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2F: ");
 		print_vector_d(antiDiag2F);
 	#endif
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2: ");
 		print_vector_d(antiDiag2.simd);
 	#endif
@@ -301,7 +301,7 @@ LoganOneDirection
 		antiDiag3.simd = max_func (antiDiag1F, antiDiag2F);
 		// we need to have always antiDiag3 left-aligned
 		antiDiag3.elem[LOGICALWIDTH] = NINF;
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag3: ");
 		print_vector_d(antiDiag3.simd);
 	#endif
@@ -321,14 +321,14 @@ LoganOneDirection
 		// antiDiag swap, offset updates, and new base load
 		if (dir == myRIGHT)
 		{
-		#ifdef DEBUG
+		#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
 		#endif
 			moveRight (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
 		else
 		{
-		#ifdef DEBUG
+		#ifdef DEBUGLOGAN
 			printf("myDOWN\n");
 		#endif
 			moveDown (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
@@ -339,7 +339,7 @@ LoganOneDirection
 	// PHASE IV (reaching end of sequences)
 	//======================================================================================
 
-#ifdef DEBUG
+#ifdef DEBUGLOGAN
 	printf("Phase IV\n");
 #endif
 	for (int i = 0; i < (LOGICALWIDTH - 3); i++)
@@ -350,7 +350,7 @@ LoganOneDirection
 		m = blendv_func (vmismatchCost, vmatchCost, m);
 		vector_t antiDiag1F = add_func (m, antiDiag1.simd);
 
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("\n");
 		printf("antiDiag1: ");
 		print_vector_d(antiDiag1.simd);
@@ -360,20 +360,20 @@ LoganOneDirection
 
 		// antiDiag2S (shift)
 		vector_union_t antiDiag2S = leftShift (antiDiag2);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2S: ");
 		print_vector_d(antiDiag2S.simd);
 	#endif
 		// antiDiag2M (pairwise max)
 		vector_t antiDiag2M = max_func (antiDiag2S.simd, antiDiag2.simd);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2M: ");
 		print_vector_d(antiDiag2M);
 	#endif
 
 		// antiDiag2F (final)
 		vector_t antiDiag2F = add_func (antiDiag2M, vgapCost);
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2F: ");
 		print_vector_d(antiDiag2F);
 	#endif
@@ -381,11 +381,11 @@ LoganOneDirection
 		antiDiag3.simd = max_func (antiDiag1F, antiDiag2F);
 		// we need to have always antiDiag3 left-aligned
 		antiDiag3.elem[LOGICALWIDTH] = NINF;
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag2: ");
 		print_vector_d(antiDiag2.simd);
 	#endif
-	#ifdef DEBUG
+	#ifdef DEBUGLOGAN
 		printf("antiDiag3: ");
 		print_vector_d(antiDiag3.simd);
 	#endif
@@ -407,14 +407,14 @@ LoganOneDirection
 		// antiDiag swap, offset updates, and new base load
 		if (nextDir == myRIGHT)
 		{
-		#ifdef DEBUG
+		#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
 		#endif
 			moveRight (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
 		else
 		{
-		#ifdef DEBUG
+		#ifdef DEBUGLOGAN
 			printf("myDOWN\n");
 		#endif
 			moveDown (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
