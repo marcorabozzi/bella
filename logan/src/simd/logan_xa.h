@@ -205,6 +205,12 @@ LoganOneDirection
 		antiDiagBest = *std::max_element(antiDiag3.elem, antiDiag3.elem + VECTORWIDTH);
 		if(antiDiagBest < best - scoreDropOff)
 		{
+			// find positions of longest extension and update seed
+			setBeginPositionH(seed, 0);
+			setBeginPositionV(seed, 0);
+			// TODO : fix this
+			setEndPositionH(seed, hoffset);
+			setEndPositionV(seed, voffset);
 			delete [] queryh;
 			delete [] queryv;
 			return std::make_pair(best, antiDiagBest);
@@ -310,6 +316,12 @@ LoganOneDirection
 		antiDiagBest = *std::max_element(antiDiag3.elem, antiDiag3.elem + VECTORWIDTH);
 		if(antiDiagBest < best - scoreDropOff)
 		{
+			// find positions of longest extension and update seed
+			setBeginPositionH(seed, 0);
+			setBeginPositionV(seed, 0);
+			// TODO : fix this
+			setEndPositionH(seed, hoffset);
+			setEndPositionV(seed, voffset);
 			delete [] queryh;
 			delete [] queryv;
 			return std::make_pair(best, antiDiagBest);
@@ -394,6 +406,13 @@ LoganOneDirection
 		antiDiagBest = *std::max_element(antiDiag3.elem, antiDiag3.elem + VECTORWIDTH);
 		if(antiDiagBest < best - scoreDropOff)
 		{
+			// find positions of longest extension and update seed
+			setBeginPositionH(seed, 0);
+			setBeginPositionV(seed, 0);
+			// TODO : fix this
+			setEndPositionH(seed, hoffset);
+			setEndPositionV(seed, voffset);
+
 			delete [] queryh;
 			delete [] queryv;
 			return std::make_pair(best, antiDiagBest);
@@ -423,13 +442,6 @@ LoganOneDirection
 		dir = nextDir;
 	}
 
-	// find positions of longest extension and update seed
-	setBeginPositionH(seed, 0);
-	setBeginPositionV(seed, 0);
-	// TODO : fix rthis
-	setEndPositionH(seed, hoffset);
-	setEndPositionV(seed, voffset);
-
 	delete [] queryh;
 	delete [] queryv;
 
@@ -444,7 +456,8 @@ LoganXDrop
 	std::string const& target,
 	std::string const& query,
 	ScoringSchemeL& scoringScheme,
-	unsigned short const &scoreDropOff
+	unsigned short const &scoreDropOff,
+	unsigned short const &kmerLen
 )
 {
 	// TODO: check scoring scheme correctness/input parameters
@@ -454,28 +467,73 @@ LoganXDrop
 		std::string queryPrefix = query.substr (0, getEndPositionV(seed));		// from read start til start seed (seed included)
 		std::reverse (targetPrefix.begin(), targetPrefix.end());
 		std::reverse (queryPrefix.begin(), queryPrefix.end());
-		return LoganOneDirection (seed, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
+
+		SeedL seedL;
+		setBeginPositionH(seedL, 0);
+		setBeginPositionV(seedL, 0);
+		setEndPositionH(seedL, kmerLen);
+		setEndPositionV(seedL, kmerLen);
+
+		std::pair<short, short> extLeft = LoganOneDirection(seedL, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
+
+		setBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seedL));
+		setBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seedL));
+
+		return extLeft;
 	}
 	else if (direction == LOGAN_EXTEND_RIGHT)
 	{
+		SeedL seedR;
+		setBeginPositionH(seedR, 0);
+		setBeginPositionV(seedR, 0);
+		setEndPositionH(seedR, kmerLen);
+		setEndPositionV(seedR, kmerLen);
+
 		std::string targetSuffix = target.substr (getBeginPositionH(seed), target.length()); 	// from end seed until the end (seed included)
 		std::string querySuffix = query.substr (getBeginPositionV(seed), query.length());		// from end seed until the end (seed included)
-		return LoganOneDirection (seed, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
+
+		std::pair<short, short> extRight = LoganOneDirection (seed, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
+
+		setEndPositionH(seed, getEndPositionH(seedR));
+		setEndPositionV(seed, getEndPositionV(seedR));
+
+		return extRight;
 	}
 	else
 	{
 		std::pair<short, short> extLeft;
 		std::pair<short, short> extRight;
 
+		SeedL seedL;
+		setBeginPositionH(seedL, 0);
+		setBeginPositionV(seedL, 0);
+		setEndPositionH(seedL, kmerLen);
+		setEndPositionV(seedL, kmerLen);
+
+		SeedL seedR;
+		setBeginPositionH(seedR, 0);
+		setBeginPositionV(seedR, 0);
+		setEndPositionH(seedR, kmerLen);
+		setEndPositionV(seedR, kmerLen);
+
+		//printf("1 %d %d %d %d\n", getEndPositionH(seedR), getEndPositionV(seedR), getEndPositionH(seedL), getEndPositionV(seedL));
+
 		std::string targetPrefix = target.substr (0, getBeginPositionH(seed));	// from read start til start seed (seed not included)
 		std::string queryPrefix = query.substr (0, getBeginPositionV(seed));	// from read start til start seed (seed not included)
 		std::reverse (targetPrefix.begin(), targetPrefix.end());
 		std::reverse (queryPrefix.begin(), queryPrefix.end());
-		extLeft = LoganOneDirection (seed, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
+		extLeft = LoganOneDirection (seedL, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
 
 		std::string targetSuffix = target.substr (getBeginPositionH(seed), target.length()); 	// from end seed until the end (seed included)
 		std::string querySuffix = query.substr (getBeginPositionV(seed), query.length());		// from end seed until the end (seed included)
-		extRight = LoganOneDirection (seed, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
+		extRight = LoganOneDirection (seedR, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
+
+		//printf("2 %d %d %d %d\n", getEndPositionH(seedR), getEndPositionV(seedR), getEndPositionH(seedL), getEndPositionV(seedL));
+
+		setBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seedL));
+		setBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seedL));
+		setEndPositionH(seed, getEndPositionH(seedR));
+		setEndPositionV(seed, getEndPositionV(seedR));
 
 		return extLeft + extRight;
 	}

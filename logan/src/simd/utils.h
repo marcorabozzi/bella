@@ -124,7 +124,7 @@ setAlignScore(SeedL &myseed,int const value){
 }
 
 inline void
-setBeginPositionH(SeedL &myseed,int const value){
+setBeginPositionH(SeedL &myseed, int const value){
 	myseed.beginPositionH = value;
 }
 

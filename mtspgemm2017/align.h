@@ -107,18 +107,19 @@ loganResult alignLogan(const std::string & row, const std::string & col, int rle
 		setEndPositionV(seed, j + kmer_len);
 
 		// perform alignment
-		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, cpyrow, col, scoringScheme, xdrop);
-	#pragma omp critical
-		{
-		printf("%d %d %d %d\n", temp.first, temp.second, getBeginPositionV(seed), getEndPositionV(seed));
-		}
+		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, cpyrow, col, scoringScheme, xdrop, kmer_len);
+		//	#pragma omp critical
+		//{
+		//printf("%d %d %d %d %d %d\n", temp.first, temp.second, getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
+		//}
 
 	}
 	else
 	{
 		strand = 'n';
 		// perform alignment
-		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, row, col, scoringScheme, xdrop);
+		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, row, col, scoringScheme, xdrop, kmer_len);
+
 	} 
 
 	result.score = temp;
