@@ -414,9 +414,6 @@ void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1,
 	int begpH = getBeginPositionH(maxseed);
 	int endpH = getEndPositionH(maxseed);
 
-	printf("%d %d\n", begpV, endpV);
-	printf("%d %d\n", begpH, endpH);
-
 	// get references for better naming
 	const string& seq1 = read1.seq;
 	const string& seq2 = read2.seq;

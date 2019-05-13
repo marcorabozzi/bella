@@ -112,7 +112,6 @@ loganResult alignLogan(const std::string & row, const std::string & col, int rle
 		//{
 		//printf("%d %d %d %d %d %d\n", temp.first, temp.second, getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
 		//}
-
 	}
 	else
 	{
