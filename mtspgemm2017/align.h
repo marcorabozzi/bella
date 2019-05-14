@@ -87,38 +87,56 @@ loganResult alignLogan(const std::string & row, const std::string & col, int rle
 
 	std::pair<int, int> temp;
 	loganResult result;
-	TSeed seed(i, j, i + kmer_len, j + kmer_len);
+	TSeed seed(i, j, kmer_len);
 
 	if(seedH != seedV)
 	{
 		strand = 'c';
 		// reverse complement horizonatal sequence and update its seed position
-		std::string cpyrow = row; // new string not to modify the original one
+		std::string cpyrow = row;
+
 		std::transform(
-			cpyrow.begin(),
-			cpyrow.end(),
-			cpyrow.begin(),
+			std::begin(cpyrow),
+			std::end(cpyrow),
+			std::begin(cpyrow),
 		revComplement);
-		i = cpyrow.length() - i - kmer_len;
+		i = rlen - i - kmer_len;
 
 		setBeginPositionH(seed, i);
 		setBeginPositionV(seed, j);
-		setEndPositionH(seed, i + kmer_len);
-		setEndPositionV(seed, j + kmer_len);
+		setEndPositionH(seed, i+kmer_len);
+		setEndPositionV(seed, j+kmer_len);
+
+		#pragma omp critical
+		{
+			printf("s %d %d\n", i, j);
+			printf("c %d %d %d %d %d %d\n", cpyrow.length(), col.length(), getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
+		}
 
 		// perform alignment
-		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, cpyrow, col, scoringScheme, xdrop, kmer_len);
-		//	#pragma omp critical
-		//{
-		//printf("%d %d %d %d %d %d\n", temp.first, temp.second, getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
-		//}
+		temp = LoganXDrop(seed, LOGAN_EXTEND_RIGHT, cpyrow, col, scoringScheme, xdrop, kmer_len);
+
+		#pragma omp critical
+		{
+			printf("c %d %d %d %d %d %d %d\n\n", temp.second, cpyrow.length(), col.length(), getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
+		}
 	}
 	else
 	{
 		strand = 'n';
 		// perform alignment
-		temp = LoganXDrop(seed, LOGAN_EXTEND_BOTH, row, col, scoringScheme, xdrop, kmer_len);
+		#pragma omp critical
+		{
+			printf("s %d %d\n", i, j);
+			printf("n %d %d %d %d %d %d\n", row.length(), col.length(), getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
+		}
+		temp = LoganXDrop(seed, LOGAN_EXTEND_RIGHT, row, col, scoringScheme, xdrop, kmer_len);
 
+		#pragma omp critical
+		{
+			printf("n %d %d %d %d %d %d %d\n\n", temp.second, row.length(), col.length(), getBeginPositionH(seed), getEndPositionH(seed), getBeginPositionV(seed), getEndPositionV(seed));
+		}
+	
 	} 
 
 	result.score = temp;
