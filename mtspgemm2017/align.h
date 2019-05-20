@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+using namespace seqan;
 using namespace std;
 
 double adaptiveSlope(double error)

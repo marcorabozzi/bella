@@ -347,8 +347,8 @@ LoganOneDirection
 	}
 
 	// Longest extension and update seed
-	setEndPositionH(seed, hoffset);
-	setEndPositionV(seed, voffset);
+	LoganSetEndPositionH(seed, hoffset);
+	LoganSetEndPositionV(seed, voffset);
 
 	delete [] queryh;
 	delete [] queryv;

@@ -134,13 +134,11 @@ LoganSetBeginPositionV(SeedL &myseed,int const value){
 }
 
 inline void
-
 LoganSetEndPositionH(SeedL &myseed,int const value){
 	myseed.endPositionH = value;
 }
 
 inline void
-
 LoganSetEndPositionV(SeedL &myseed,int const value){
 	myseed.endPositionV = value;
 }
