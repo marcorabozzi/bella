@@ -19,6 +19,7 @@ extern "C" {
 #endif
 
 #include "../libcuckoo/cuckoohash_map.hh"
+#include "../logan/src/simd/utils.h"
 
 struct BELLApars
 {
@@ -46,10 +47,18 @@ template <typename T>
 }
 
 typedef seqan::Seed<seqan::Simple> TSeed;
+typedef SeedL TSeedLogan;
+
 struct seqAnResult {
     int score;
     std::string strand;
     TSeed seed;
+};
+
+struct loganResult {
+    std::pair<int, int> score;
+    std::string strand;
+    TSeedLogan seed;
 };
 
 struct readType_ {
