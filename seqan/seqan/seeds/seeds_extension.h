@@ -822,9 +822,6 @@ extendSeed(Seed<Simple, TConfig> & seed,
         TDatabasePrefix databasePrefix = prefix(database, beginPositionH(seed));
         TQueryPrefix queryPrefix = prefix(query, beginPositionV(seed));
 
-        //std::cout << databasePrefix << std::endl;
-        //std::cout << queryPrefix << std::endl;
-
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreLeft = _extendSeedGappedXDropOneDirection(seed, queryPrefix, databasePrefix, EXTEND_LEFT, scoringScheme, scoreDropOff);
     }
@@ -836,17 +833,10 @@ extendSeed(Seed<Simple, TConfig> & seed,
 
         typedef typename Suffix<TDatabase const>::Type TDatabaseSuffix;
         typedef typename Suffix<TQuery const>::Type TQuerySuffix;
-        std::cout << endPositionH(seed) << std::endl;
+
         TDatabaseSuffix databaseSuffix = suffix(database, endPositionH(seed));
         TQuerySuffix querySuffix = suffix(query, endPositionV(seed));
 
-        std::cout << databaseSuffix << std::endl;
-        //std::cout << querySuffix << std::endl;
-
-        // std::cout << "database = " << database << std::endl;
-        // std::cout << "database Suffix = " << databaseSuffix << std::endl;
-        // std::cout << "query = " << query << std::endl;
-        // std::cout << "query Suffix = " << querySuffix << std::endl;
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreRight =  _extendSeedGappedXDropOneDirection(seed, querySuffix, databaseSuffix, EXTEND_RIGHT, scoringScheme, scoreDropOff);
     }

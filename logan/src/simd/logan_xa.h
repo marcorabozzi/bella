@@ -313,8 +313,8 @@ LoganOneDirection
 		if(antiDiagBest < best - scoreDropOff)
 		{
 			// Longest extension and update seed
-			LoganSetEndPositionH(seed, hoffset);
-			LoganSetEndPositionV(seed, voffset);
+			LoganSetEndPositionH(seed, hoffset - i);
+			LoganSetEndPositionV(seed, voffset - i);
 
 			delete [] queryh;
 			delete [] queryv;
@@ -416,14 +416,9 @@ LoganXDrop
 		std::reverse (queryPrefix.begin(), queryPrefix.end());
 		extLeft = LoganOneDirection (seed1, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
 
-		//std::cout << targetPrefix << std::endl;
-		//std::cout << queryPrefix << std::endl;
 		std::string targetSuffix = target.substr (getEndPositionH(seed), target.length()); 	// from end seed until the end (seed included)
 		std::string querySuffix = query.substr (getEndPositionV(seed), query.length());		// from end seed until the end (seed included)
 		extRight = LoganOneDirection (seed2, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
-
-		std::cout << targetSuffix << std::endl;
-		//std::cout << querySuffix << std::endl;
 
 		LoganSetBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seed1));
 		LoganSetBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seed1));

@@ -105,9 +105,9 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 	seedH = infix(seqH, beginPositionH(seed), endPositionH(seed));
 	seedV = infix(seqV, beginPositionV(seed), endPositionV(seed));
 
-//    std::string seedH = row.substr(i, kmer_len);
-//    std::string seedV = col.substr(j, kmer_len);
-//    std::string strand;
+	//std::string seedH = row.substr(i, kmer_len);
+	//std::string seedV = col.substr(j, kmer_len);
+	//std::string strand;
 
 	/* we are reversing the "row", "col" is always on the forward strand */
 	Dna5StringReverseComplement twin(seedH);
@@ -116,7 +116,6 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 	{
 		strand = 'c';
 		Dna5StringReverseComplement twinRead(seqH);
-//        i = rlen - i - kmer_len;
 
 		std::string cpyrow = row;
 
@@ -138,42 +137,20 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		LoganSetEndPositionV(seedLogan, j + kmer_len);
 
 		/* Perform match extension */
-		std::cout << twinRead << std::endl;
-		std::cout << beginPositionH(seed) << std::endl;
-		std::cout << beginPositionV(seed) << std::endl;
-		std::cout << endPositionH(seed) << std::endl;
-		std::cout << endPositionV(seed) << std::endl;
 		longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
-		//std::cout << std::endl;
-		//std::cout << "strand " << strand << std::endl;
-		//std::cout << "SeqAn "  << longestExtensionTemp << std::endl;
-		std::cout << getBeginPositionH(seedLogan) << std::endl;
-		std::cout << getBeginPositionV(seedLogan) << std::endl;
-		std::cout << getEndPositionH(seedLogan) << std::endl;
-		std::cout << getEndPositionV(seedLogan) << std::endl;
-		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
-		std::cout << std::endl;
-		//std::cout << "Logan "  << temp.second << std::endl;
-		exit(0);
+		std::cout << longestExtensionTemp << std::endl;
 
-	} else
+		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
+		std::cout << temp.second << std::endl;
+
+	}
+	 else
 	{
-		std::cout << seqH << std::endl;
-		std::cout << beginPositionH(seed) << std::endl;
-		std::cout << beginPositionV(seed) << std::endl;
-		std::cout << endPositionH(seed) << std::endl;
-		std::cout << endPositionV(seed) << std::endl;
 		longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
-		//std::cout << std::endl;
-		std::cout << getBeginPositionH(seedLogan) << std::endl;
-		std::cout << getBeginPositionV(seedLogan) << std::endl;
-		std::cout << getEndPositionH(seedLogan) << std::endl;
-		std::cout << getEndPositionV(seedLogan) << std::endl;
-		//std::cout << "SeqAn "  << longestExtensionTemp << std::endl;
+		std::cout << longestExtensionTemp << std::endl;
+
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop, kmer_len);
-		std::cout << std::endl;
-		//std::cout << "Logan "  << temp.second << std::endl;
-		exit(0);
+		std::cout << temp.second << std::endl;
 	} 
 
 	longestExtensionScore.score = longestExtensionTemp;
