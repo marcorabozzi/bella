@@ -822,8 +822,12 @@ extendSeed(Seed<Simple, TConfig> & seed,
         TDatabasePrefix databasePrefix = prefix(database, beginPositionH(seed));
         TQueryPrefix queryPrefix = prefix(query, beginPositionV(seed));
 
+        //std::cout << beginPositionH(seed) << std::endl;
+        //std::cout << databasePrefix << std::endl;
+
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreLeft = _extendSeedGappedXDropOneDirection(seed, queryPrefix, databasePrefix, EXTEND_LEFT, scoringScheme, scoreDropOff);
+        //std::cout << beginPositionH(seed) << std::endl;
     }
 
     if (direction == EXTEND_RIGHT || direction == EXTEND_BOTH)
@@ -836,9 +840,6 @@ extendSeed(Seed<Simple, TConfig> & seed,
 
         TDatabaseSuffix databaseSuffix = suffix(database, endPositionH(seed));
         TQuerySuffix querySuffix = suffix(query, endPositionV(seed));
-
-        //std::cout << endPositionH(seed) << std::endl;
-        //std::cout << databaseSuffix << std::endl;
 
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreRight =  _extendSeedGappedXDropOneDirection(seed, querySuffix, databaseSuffix, EXTEND_RIGHT, scoringScheme, scoreDropOff);

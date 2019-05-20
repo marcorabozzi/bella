@@ -147,6 +147,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		//std::cout << cpyrow << std::endl;
 
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
+		std::cout << temp.first << std::endl;
 		std::cout << temp.second << std::endl;
 
 	}
@@ -156,8 +157,8 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		std::cout << longestExtensionTemp << std::endl;
 
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop, kmer_len);
+		std::cout << temp.first << std::endl;
 		std::cout << temp.second << std::endl;
-
 	} 
 
 	longestExtensionScore.score = longestExtensionTemp;
