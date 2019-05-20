@@ -4,6 +4,9 @@
 // Date:   22 April 2019
 //==================================================================
 
+#ifndef LOGANXA_H
+#define LOGANXA_H
+
 #include<vector>
 #include<iostream>
 #include<omp.h>
@@ -203,12 +206,10 @@ LoganOneDirection
 		antiDiagBest = *std::max_element(antiDiag3.elem, antiDiag3.elem + VECTORWIDTH);
 		if(antiDiagBest < best - scoreDropOff)
 		{
-				// find positions of longest extension and update seed
-	LoganSetBeginPositionH(seed, 0);
-	LoganSetBeginPositionV(seed, 0);
-	// TODO : fix rthis
-	LoganSetEndPositionH(seed, hoffset);
-	LoganSetEndPositionV(seed, voffset);
+			// Longest extension and update seed
+			LoganSetEndPositionH(seed, hoffset);
+			LoganSetEndPositionV(seed, voffset);
+
 			delete [] queryh;
 			delete [] queryv;
 			return std::make_pair(best, antiDiagBest);
@@ -311,12 +312,10 @@ LoganOneDirection
 		antiDiagBest = *std::max_element(antiDiag3.elem, antiDiag3.elem + VECTORWIDTH);
 		if(antiDiagBest < best - scoreDropOff)
 		{
-				// find positions of longest extension and update seed
-	LoganSetBeginPositionH(seed, 0);
-	LoganSetBeginPositionV(seed, 0);
-	// TODO : fix rthis
-	LoganSetEndPositionH(seed, hoffset);
-	LoganSetEndPositionV(seed, voffset);
+			// Longest extension and update seed
+			LoganSetEndPositionH(seed, hoffset);
+			LoganSetEndPositionV(seed, voffset);
+
 			delete [] queryh;
 			delete [] queryv;
 			return std::make_pair(best, antiDiagBest);
@@ -342,13 +341,14 @@ LoganOneDirection
 		#endif
 			moveDown (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
-		// Direction update
+
+		// direction update
 		dir = nextDir;
 	}
 
 	// Longest extension and update seed
-	LoganSetEndPositionH(seed, hoffset);
-	LoganSetEndPositionV(seed, voffset);
+	setEndPositionH(seed, hoffset);
+	setEndPositionV(seed, voffset);
 
 	delete [] queryh;
 	delete [] queryv;
@@ -388,6 +388,7 @@ LoganXDrop
 	}
 	else if (direction == LOGAN_EXTEND_RIGHT)
 	{
+
 		SeedL seed2 = seed;
 		std::pair<short, short> extRight;
 
@@ -403,6 +404,7 @@ LoganXDrop
 	}
 	else
 	{
+
 		SeedL seed1 = seed;
 		SeedL seed2 = seed;
 		std::pair<short, short> extLeft;
@@ -431,3 +433,5 @@ LoganXDrop
 		return extLeft + extRight;
 	}
 }
+
+#endif

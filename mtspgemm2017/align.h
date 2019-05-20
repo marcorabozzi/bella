@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-using namespace seqan;
 using namespace std;
 
 double adaptiveSlope(double error)
@@ -84,6 +83,7 @@ char revComplement(char n)
  * @param xdrop
  * @return alignment score and extended seed
  */
+
 seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
 
 	ScoringSchemeL scoringSchemeLogan(1,-1,-1);
@@ -118,6 +118,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 //        i = rlen - i - kmer_len;
 
 		std::string cpyrow = row;
+
 		std::transform(
 			std::begin(cpyrow),
 			std::end(cpyrow),
