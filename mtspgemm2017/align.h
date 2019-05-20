@@ -118,6 +118,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		Dna5StringReverseComplement twinRead(seqH);
 
 		std::string cpyrow = row;
+		std::reverse(cpyrow.begin(), cpyrow.end());
 
 		std::transform(
 			std::begin(cpyrow),
@@ -137,8 +138,13 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		LoganSetEndPositionV(seedLogan, j + kmer_len);
 
 		/* Perform match extension */
+		//std::cout << seqH << std::endl;
+		//std::cout << twinRead << std::endl;
 		longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
 		std::cout << longestExtensionTemp << std::endl;
+
+		//std::cout << row << std::endl;
+		//std::cout << cpyrow << std::endl;
 
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
 		std::cout << temp.second << std::endl;
@@ -151,6 +157,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop, kmer_len);
 		std::cout << temp.second << std::endl;
+
 	} 
 
 	longestExtensionScore.score = longestExtensionTemp;

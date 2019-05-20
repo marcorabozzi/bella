@@ -576,30 +576,30 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				numAlignmentsThread++;
 				readLengthsThread = readLengthsThread + seq1len + seq2len;
 #endif
-                seqAnResult maxExtScore;
-                bool passed = false;
+				seqAnResult maxExtScore;
+				bool passed = false;
 
-                if(val->count == 1)
-                {
-                    auto it = val->pos.begin();
-                    int i = it->first, j = it->second;
+				if(val->count == 1)
+				{
+					auto it = val->pos.begin();
+					int i = it->first, j = it->second;
 
-                    maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
-                    PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-                }
-                else
-                {
-                    for(auto it = val->pos.begin(); it != val->pos.end(); ++it) // if !b_pars.allKmer this should be at most two cycle
-                    {
-                        int i = it->first, j = it->second;
+					maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
+					PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+				}
+				else
+				{
+					for(auto it = val->pos.begin(); it != val->pos.end(); ++it) // if !b_pars.allKmer this should be at most two cycle
+					{
+						int i = it->first, j = it->second;
 
-                        maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
-                        PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+						maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
+						PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
 
-                        if(passed)
-                            break;
-                    }
-                }
+						if(passed)
+							break;
+					}
+				}
 #ifdef TIMESTEP
 			numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
 #endif

@@ -418,6 +418,8 @@ LoganXDrop
 
 		std::string targetSuffix = target.substr (getEndPositionH(seed), target.length()); 	// from end seed until the end (seed included)
 		std::string querySuffix = query.substr (getEndPositionV(seed), query.length());		// from end seed until the end (seed included)
+		//std::cout << getEndPositionH(seed) << std::endl;
+		//std::cout << targetSuffix << std::endl;
 		extRight = LoganOneDirection (seed2, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
 		LoganSetBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seed1));
