@@ -1,11 +1,6 @@
 #include "CSC.h"
 #include "align.h"
 #include "common.h"
-#include <seqan/sequence.h>
-#include <seqan/align.h>
-#include <seqan/score.h>
-#include <seqan/modifier.h>
-#include <seqan/seeds.h>
 #include "../kmercode/hash_funcs.h"
 #include "../kmercode/Kmer.hpp"
 #include "../kmercode/Buffer.h"
@@ -29,8 +24,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-typedef SeedSet<TSeed> TSeedSet;
 
 #define PERCORECACHE (1024 * 1024)
 #define TIMESTEP

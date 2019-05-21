@@ -1,11 +1,6 @@
 #ifndef _ALIGNMENT_H_
 #define _ALIGNMENT_H_
 
-#include <seqan/sequence.h>
-#include <seqan/align.h>
-#include <seqan/score.h>
-#include <seqan/modifier.h>
-#include <seqan/seeds.h>
 #include "../logan/src/simd/score.h"
 #include "../logan/src/simd/simd_utils.h"
 #include "../logan/src/simd/logan_xa.h"
@@ -27,7 +22,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-using namespace seqan;
 using namespace std;
 
 double adaptiveSlope(double error)
@@ -163,3 +157,4 @@ loganResult alignSeqAn(const std::string & row, const std::string & col, int rle
 }
 
 #endif
+
