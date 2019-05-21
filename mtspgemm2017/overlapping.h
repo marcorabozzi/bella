@@ -408,7 +408,7 @@ double estimateMemory(const BELLApars & b_pars)
 	return free_memory;
 }
 
-void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
+void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
 					const BELLApars & b_pars, double ratioPhi, int count, stringstream & myBatch, size_t & outputted,
 					size_t & numBasesAlignedTrue, size_t & numBasesAlignedFalse, bool & passed)
 {
@@ -416,10 +416,10 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 
 	// {begin/end}Position{V/H}: Returns the begin/end position of the seed in the query (vertical/horizonral direction)
 	// these four return seqan:Tposition objects
-	int begpV = beginPositionV(maxseed);
-	int endpV = endPositionV(maxseed);	
-	int begpH = beginPositionH(maxseed);
-	int endpH = endPositionH(maxseed);
+	int begpV = getBeginPositionV(maxseed);
+	int endpV = getEndPositionV(maxseed);	
+	int begpH = getBeginPositionH(maxseed);
+	int endpH = getEndPositionH(maxseed);
 
 	// get references for better naming
 	const string& seq1 = read1.seq;
@@ -438,7 +438,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
 		double newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
 		// second is the exit score, first is the best score
-		if((double)maxExtScore.score > newThr)
+		if((double)maxExtScore.score.second > newThr)
 		{
 			if(b_pars.alignEnd)
 			{
@@ -452,7 +452,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		}
 	}
 	// second is the exit score, first is the best score
-	else if(maxExtScore.score > b_pars.defaultThr)
+	else if(maxExtScore.score.second > b_pars.defaultThr)
 	{
 		if(b_pars.alignEnd)
 		{
@@ -469,7 +469,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
 		if(!b_pars.outputPaf)  // BELLA output format
 		{
-			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
+			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
 				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
 				// column seq name
 				// row seq name
@@ -503,7 +503,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 			// If PAF is generated from an alignment, column 10 equals the number of sequence matches, 
 			// and column 11 equals the total number of sequence matches, mismatches, insertions and deletions in the alignment     
 			myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
-				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score << '\t' << ov << '\t' << mapq << endl;
+				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << mapq << endl;
 				// column seq name
 				// column seq length
 				// column seq start
@@ -576,7 +576,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				numAlignmentsThread++;
 				readLengthsThread = readLengthsThread + seq1len + seq2len;
 #endif
-				seqAnResult maxExtScore;
+				loganResult maxExtScore;
 				bool passed = false;
 
 				if(val->count == 1)
@@ -601,7 +601,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 					}
 				}
 #ifdef TIMESTEP
-			numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
+			numBasesAlignedThread += getEndPositionV(maxExtScore.seed)-getBeginPositionV(maxExtScore.seed);
 #endif
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file

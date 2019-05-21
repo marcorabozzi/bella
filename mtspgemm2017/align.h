@@ -85,37 +85,36 @@ char revComplement(char n)
  * @return alignment score and extended seed
  */
 
-seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
+loganResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
 
-	ScoringSchemeL scoringSchemeLogan(1,-1,-1);
-	Score<int, Simple> scoringScheme(1,-1,-1);
+	ScoringSchemeL scoringSchemeLogan(1, -1, -1);
+	//	Score<int, Simple> scoringScheme(1, -1, -1);
 
-	Dna5String seqH(row); 
-	Dna5String seqV(col); 
-	Dna5String seedH;
-	Dna5String seedV;
-	string strand;
+	//	Dna5String seqH(row); 
+	//	Dna5String seqV(col); 
+	//	Dna5String seedH;
+	//	Dna5String seedV;
+	std::string strand;
 	std::pair<int, int> temp;
-	int longestExtensionTemp;
-	seqAnResult longestExtensionScore;
+	//	int longestExtensionTemp;
+	//	seqAnResult longestExtensionScore;
 	loganResult result;
 
-	TSeed seed(i, j, i+kmer_len, j+kmer_len);
+	//	TSeed seed(i, j, i+kmer_len, j+kmer_len);
 	TSeedLogan seedLogan(i, j, kmer_len);
-	seedH = infix(seqH, beginPositionH(seed), endPositionH(seed));
-	seedV = infix(seqV, beginPositionV(seed), endPositionV(seed));
+	//	seedH = infix(seqH, beginPositionH(seed), endPositionH(seed));
+	//	seedV = infix(seqV, beginPositionV(seed), endPositionV(seed));
 
-	//std::string seedH = row.substr(i, kmer_len);
-	//std::string seedV = col.substr(j, kmer_len);
-	//std::string strand;
+	std::string seedH = row.substr(i, kmer_len);
+	std::string seedV = col.substr(j, kmer_len);
 
 	/* we are reversing the "row", "col" is always on the forward strand */
-	Dna5StringReverseComplement twin(seedH);
+	//	Dna5StringReverseComplement twin(seedH);
 
-	if(twin == seedV)
+	if(seedH != seedV)
 	{
 		strand = 'c';
-		Dna5StringReverseComplement twinRead(seqH);
+		//	Dna5StringReverseComplement twinRead(seqH);
 
 		std::string cpyrow = row;
 		std::reverse(cpyrow.begin(), cpyrow.end());
@@ -127,10 +126,10 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		revComplement);
 		i = rlen - i - kmer_len;
 
-		setBeginPositionH(seed, i);
-		setBeginPositionV(seed, j);
-		setEndPositionH(seed, i+kmer_len);
-		setEndPositionV(seed, j+kmer_len);
+		//	setBeginPositionH(seed, i);
+		//	setBeginPositionV(seed, j);
+		//	setEndPositionH(seed, i+kmer_len);
+		//	setEndPositionV(seed, j+kmer_len);
 
 		LoganSetBeginPositionH(seedLogan, i);
 		LoganSetBeginPositionV(seedLogan, j);
@@ -138,38 +137,29 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		LoganSetEndPositionV(seedLogan, j + kmer_len);
 
 		/* Perform match extension */
-		//std::cout << seqH << std::endl;
-		//std::cout << twinRead << std::endl;
-		longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
-		std::cout << longestExtensionTemp << std::endl;
-
-		//std::cout << row << std::endl;
-		//std::cout << cpyrow << std::endl;
+		//	longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+		//	std::cout << longestExtensionTemp << std::endl;
 
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
-		std::cout << temp.first << std::endl;
-		std::cout << temp.second << std::endl;
 
 	}
 	 else
 	{
-		longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
-		std::cout << longestExtensionTemp << std::endl;
-
+		//	longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+		//	std::cout << longestExtensionTemp << std::endl;
+		strand = 'n';
 		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop, kmer_len);
-		std::cout << temp.first << std::endl;
-		std::cout << temp.second << std::endl;
 	} 
 
-	longestExtensionScore.score = longestExtensionTemp;
-	longestExtensionScore.seed = seed;
-	longestExtensionScore.strand = strand;
+	//	longestExtensionScore.score = longestExtensionTemp;
+	//	longestExtensionScore.seed = seed;
+	//	longestExtensionScore.strand = strand;
 
 	result.score = temp;
 	result.seed = seedLogan;
 	result.strand = strand;
 
-	return longestExtensionScore;
+	return result;
 }
 
 #endif
