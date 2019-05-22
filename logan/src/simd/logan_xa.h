@@ -247,6 +247,10 @@ LoganOneDirection
 		}
 	}
 
+	// at least one sequence has achieved its max length
+	int hextension = hoffset - 1;
+	int vextension = voffset - 1;
+
 	//======================================================================================
 	// PHASE III (we are one edge)
 	//======================================================================================
@@ -313,8 +317,8 @@ LoganOneDirection
 		if(antiDiagBest < best - scoreDropOff)
 		{
 			// Longest extension and update seed
-			LoganSetEndPositionH(seed, hoffset - i);
-			LoganSetEndPositionV(seed, voffset - i);
+			LoganSetEndPositionH(seed, hextension);
+			LoganSetEndPositionV(seed, vextension);
 
 			delete [] queryh;
 			delete [] queryv;
@@ -332,6 +336,7 @@ LoganOneDirection
 		#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
 		#endif
+			// increment in offsett here are no just logical, they aren't valid extensions
 			moveRight (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
 		else
@@ -347,8 +352,8 @@ LoganOneDirection
 	}
 
 	// Longest extension and update seed
-	LoganSetEndPositionH(seed, hoffset);
-	LoganSetEndPositionV(seed, voffset);
+	LoganSetEndPositionH(seed, hextension); // - LOGICALWIDTH - 3);
+	LoganSetEndPositionV(seed, vextension); // - LOGICALWIDTH - 3);
 
 	delete [] queryh;
 	delete [] queryv;
@@ -404,7 +409,6 @@ LoganXDrop
 	}
 	else
 	{
-
 		SeedL seed1 = seed;
 		SeedL seed2 = seed;
 		std::pair<short, short> extLeft;
@@ -412,8 +416,7 @@ LoganXDrop
 
 		std::string targetPrefix = target.substr (0, getEndPositionH(seed));	// from read start til start seed (seed not included)
 		std::string queryPrefix = query.substr (0, getEndPositionV(seed));		// from read start til start seed (seed not included)
-		//std::cout << getBeginPositionH(seed) << std::endl;
-		//std::cout << targetPrefix << std::endl;
+
 		std::reverse (targetPrefix.begin(), targetPrefix.end());
 		std::reverse (queryPrefix.begin(), queryPrefix.end());
 		extLeft = LoganOneDirection (seed1, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
@@ -423,12 +426,11 @@ LoganXDrop
 
 		extRight = LoganOneDirection (seed2, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
-		LoganSetBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seed1));
-		LoganSetBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seed1));
+		LoganSetBeginPositionH(seed, getEndPositionH(seed) - getEndPositionH(seed1));
+		LoganSetBeginPositionV(seed, getEndPositionV(seed) - getEndPositionV(seed1));
 		LoganSetEndPositionH(seed, getEndPositionH(seed) + getEndPositionH(seed2));
 		LoganSetEndPositionV(seed, getEndPositionV(seed) + getEndPositionV(seed2));
 
-		//std::cout << getBeginPositionH(seed) << std::endl;
 
 		return extLeft + extRight;
 	}
