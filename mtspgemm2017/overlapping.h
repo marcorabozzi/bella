@@ -438,7 +438,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
 		double newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
 		// second is the exit score, first is the best score
-		if((double)maxExtScore.score > newThr)
+		if((double)maxExtScore.score.first > newThr)
 		{
 			if(b_pars.alignEnd)
 			{
@@ -452,7 +452,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		}
 	}
 	// second is the exit score, first is the best score
-	else if(maxExtScore.score > b_pars.defaultThr)
+	else if(maxExtScore.score.first > b_pars.defaultThr)
 	{
 		if(b_pars.alignEnd)
 		{
@@ -469,7 +469,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
 		if(!b_pars.outputPaf)  // BELLA output format
 		{
-			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
+			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.first << '\t' << (double)maxExtScore.score.second/(double)ov:quality << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
 				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
 				// column seq name
 				// row seq name
@@ -487,7 +487,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		else    // PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
 		{
 			/* field adjustment to match the PAF format */
-			toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
+			//toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
 			/* re-compute overlap estimation with extended alignment to the edges */
 			diffCol = endpV - begpV;
 			diffRow = endpH - begpH;
@@ -503,7 +503,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 			// If PAF is generated from an alignment, column 10 equals the number of sequence matches, 
 			// and column 11 equals the total number of sequence matches, mismatches, insertions and deletions in the alignment     
 			myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
-				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score << '\t' << ov << '\t' << mapq << endl;
+				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << mapq << endl;
 				// column seq name
 				// column seq length
 				// column seq start

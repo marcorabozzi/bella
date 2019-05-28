@@ -50,7 +50,7 @@ typedef seqan::Seed<seqan::Simple> TSeed;
 typedef SeedL TSeedLogan;
 
 struct seqAnResult {
-    int score;
+    std::pair<int, int> score;
     std::string strand;
     TSeed seed;
 };
