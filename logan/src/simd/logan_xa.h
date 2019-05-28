@@ -220,16 +220,16 @@ LoganOneDirection
 
 		// antiDiag swap, offset updates, and new base load
 		// TODO : optimize this
-		int maxpos, max = 0;
-		for(int i = 0; i < VECTORWIDTH; ++i)
-			if(antiDiag3.elem[i] > max)
-			{
-				maxpos = i;
-				max = antiDiag3.elem[i];
-			}
-
-		if(maxpos > MIDDLE)
-		//if(antiDiag3.elem[MIDDLE] < antiDiag3.elem[MIDDLE + 1])
+		//int maxpos, max = 0;
+		//for(int i = 0; i < VECTORWIDTH; ++i)
+		//	if(antiDiag3.elem[i] > max)
+		//	{
+		//		maxpos = i;
+		//		max = antiDiag3.elem[i];
+		//	}
+//
+		//if(maxpos > MIDDLE)
+		if(antiDiag3.elem[0] < antiDiag3.elem[VECTORWIDTH - 1])
 		{
 			#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
@@ -246,6 +246,9 @@ LoganOneDirection
 			dir = myDOWN;
 		}
 	}
+
+	int hextension = hoffset - 1;
+	int vextension = voffset - 1;
 
 	//======================================================================================
 	// PHASE III (we are one edge)
@@ -313,8 +316,8 @@ LoganOneDirection
 		if(antiDiagBest < best - scoreDropOff)
 		{
 			// Longest extension and update seed
-			LoganSetEndPositionH(seed, hoffset - i);
-			LoganSetEndPositionV(seed, voffset - i);
+			LoganSetEndPositionH(seed, hextension);
+			LoganSetEndPositionV(seed, vextension);
 
 			delete [] queryh;
 			delete [] queryv;
@@ -347,8 +350,8 @@ LoganOneDirection
 	}
 
 	// Longest extension and update seed
-	LoganSetEndPositionH(seed, hoffset);
-	LoganSetEndPositionV(seed, voffset);
+	LoganSetEndPositionH(seed, hextension);
+	LoganSetEndPositionV(seed, vextension);
 
 	delete [] queryh;
 	delete [] queryv;
@@ -381,8 +384,8 @@ LoganXDrop
 
 		extLeft = LoganOneDirection (seed, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
 
-		LoganSetBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seed1));
-		LoganSetBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seed1));
+		LoganSetBeginPositionH(seed, getEndPositionH(seed) - getEndPositionH(seed1));
+		LoganSetBeginPositionV(seed, getEndPositionV(seed) - getEndPositionV(seed1));
 
 		return extLeft;
 	}
@@ -397,8 +400,8 @@ LoganXDrop
 
 		extRight = LoganOneDirection (seed, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
-		LoganSetEndPositionH(seed, getEndPositionH(seed) + getEndPositionH(seed2));
-		LoganSetEndPositionV(seed, getEndPositionV(seed) + getEndPositionV(seed2));
+		LoganSetEndPositionH(seed, getBeginPositionH(seed) + getEndPositionH(seed2));
+		LoganSetEndPositionV(seed, getBeginPositionV(seed) + getEndPositionV(seed2));
 
 		return extRight;
 	}
@@ -412,8 +415,7 @@ LoganXDrop
 
 		std::string targetPrefix = target.substr (0, getEndPositionH(seed));	// from read start til start seed (seed not included)
 		std::string queryPrefix = query.substr (0, getEndPositionV(seed));		// from read start til start seed (seed not included)
-		//std::cout << getBeginPositionH(seed) << std::endl;
-		//std::cout << targetPrefix << std::endl;
+
 		std::reverse (targetPrefix.begin(), targetPrefix.end());
 		std::reverse (queryPrefix.begin(), queryPrefix.end());
 		extLeft = LoganOneDirection (seed1, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
@@ -423,12 +425,18 @@ LoganXDrop
 
 		extRight = LoganOneDirection (seed2, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
-		LoganSetBeginPositionH(seed, getBeginPositionH(seed) - getEndPositionH(seed1));
-		LoganSetBeginPositionV(seed, getBeginPositionV(seed) - getEndPositionV(seed1));
+		LoganSetBeginPositionH(seed, getEndPositionH(seed) - getEndPositionH(seed1));
+		LoganSetBeginPositionV(seed, getEndPositionV(seed) - getEndPositionV(seed1));
 		LoganSetEndPositionH(seed, getEndPositionH(seed) + getEndPositionH(seed2));
 		LoganSetEndPositionV(seed, getEndPositionV(seed) + getEndPositionV(seed2));
 
 		//std::cout << getBeginPositionH(seed) << std::endl;
+		int diffCol = getEndPositionV(seed) - getBeginPositionV(seed);
+		int diffRow = getEndPositionH(seed) - getBeginPositionH(seed);
+		int minLeft = min(getBeginPositionV(seed), getBeginPositionH(seed));
+		int minRight = min(query.length() - getEndPositionV(seed), target.length() - getEndPositionH(seed));
+		int ov = minLeft+minRight+(diffCol+diffRow)/2;
+		std::cout << "Logan ov\t" << ov << std::endl;
 
 		return extLeft + extRight;
 	}
