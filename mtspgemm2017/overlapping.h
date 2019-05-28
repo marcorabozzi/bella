@@ -1,11 +1,6 @@
 #include "CSC.h"
 #include "align.h"
 #include "common.h"
-#include <seqan/sequence.h>
-#include <seqan/align.h>
-#include <seqan/score.h>
-#include <seqan/modifier.h>
-#include <seqan/seeds.h>
 #include "../kmercode/hash_funcs.h"
 #include "../kmercode/Kmer.hpp"
 #include "../kmercode/Buffer.h"
@@ -29,8 +24,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-typedef SeedSet<TSeed> TSeedSet;
 
 #define PERCORECACHE (1024 * 1024)
 #define TIMESTEP
@@ -408,7 +401,7 @@ double estimateMemory(const BELLApars & b_pars)
 	return free_memory;
 }
 
-void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
+void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
 					const BELLApars & b_pars, double ratioPhi, int count, stringstream & myBatch, size_t & outputted,
 					size_t & numBasesAlignedTrue, size_t & numBasesAlignedFalse, bool & passed)
 {
@@ -416,10 +409,10 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 
 	// {begin/end}Position{V/H}: Returns the begin/end position of the seed in the query (vertical/horizonral direction)
 	// these four return seqan:Tposition objects
-	int begpV = beginPositionV(maxseed);
-	int endpV = endPositionV(maxseed);	
-	int begpH = beginPositionH(maxseed);
-	int endpH = endPositionH(maxseed);
+	int begpV = getBeginPositionV(maxseed);
+	int endpV = getEndPositionV(maxseed);	
+	int begpH = getBeginPositionH(maxseed);
+	int endpH = getEndPositionH(maxseed);
 
 	// get references for better naming
 	const string& seq1 = read1.seq;
@@ -576,7 +569,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				numAlignmentsThread++;
 				readLengthsThread = readLengthsThread + seq1len + seq2len;
 #endif
-				seqAnResult maxExtScore;
+				loganResult maxExtScore;
 				bool passed = false;
 
 				if(val->count == 1)
@@ -601,7 +594,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 					}
 				}
 #ifdef TIMESTEP
-			numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
+			numBasesAlignedThread += getEndPositionV(maxExtScore.seed)-getBeginPositionV(maxExtScore.seed);
 #endif
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file

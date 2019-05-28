@@ -247,6 +247,7 @@ LoganOneDirection
 		}
 	}
 
+	// at least one sequence has achieved its max length
 	int hextension = hoffset - 1;
 	int vextension = voffset - 1;
 
@@ -335,6 +336,7 @@ LoganOneDirection
 		#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");
 		#endif
+			// increment in offsett here are no just logical, they aren't valid extensions
 			moveRight (antiDiag1, antiDiag2, antiDiag3, hoffset, voffset, vqueryh, vqueryv, queryh, queryv);
 		}
 		else
@@ -352,7 +354,6 @@ LoganOneDirection
 	// Longest extension and update seed
 	LoganSetEndPositionH(seed, hextension);
 	LoganSetEndPositionV(seed, vextension);
-
 	delete [] queryh;
 	delete [] queryv;
 
@@ -407,7 +408,6 @@ LoganXDrop
 	}
 	else
 	{
-
 		SeedL seed1 = seed;
 		SeedL seed2 = seed;
 		std::pair<short, short> extLeft;
@@ -436,7 +436,6 @@ LoganXDrop
 		int minLeft = min(getBeginPositionV(seed), getBeginPositionH(seed));
 		int minRight = min(query.length() - getEndPositionV(seed), target.length() - getEndPositionH(seed));
 		int ov = minLeft+minRight+(diffCol+diffRow)/2;
-		std::cout << "Logan ov\t" << ov << std::endl;
 
 		return extLeft + extRight;
 	}

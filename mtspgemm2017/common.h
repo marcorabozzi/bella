@@ -1,12 +1,6 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <seqan/sequence.h>
-#include <seqan/align.h>
-#include <seqan/score.h>
-#include <seqan/modifier.h>
-#include <seqan/seeds.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,7 +40,6 @@ template <typename T>
 	return (value > left) && (value < right);
 }
 
-typedef seqan::Seed<seqan::Simple> TSeed;
 typedef SeedL TSeedLogan;
 
 struct seqAnResult {
