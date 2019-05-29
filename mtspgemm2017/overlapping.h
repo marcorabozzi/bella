@@ -503,7 +503,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 			// If PAF is generated from an alignment, column 10 equals the number of sequence matches, 
 			// and column 11 equals the total number of sequence matches, mismatches, insertions and deletions in the alignment     
 			myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
-				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << mapq << endl;
+				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << (int)(ov*(1 - (ratioPhi*(1-b_pars.deltaChernoff)))) << '\t' << ov << '\t' << mapq << endl;
 				// column seq name
 				// column seq length
 				// column seq start
