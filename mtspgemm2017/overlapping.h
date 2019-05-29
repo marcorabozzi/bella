@@ -8,6 +8,11 @@
 #include "../kmercode/fq_reader.h"
 #include "../kmercode/ParallelFASTQ.h"
 #include "../logan/src/simd/logan_xa.h"
+#include <seqan/sequence.h>
+#include <seqan/align.h>
+#include <seqan/score.h>
+#include <seqan/modifier.h>
+#include <seqan/seeds.h>
 #include <omp.h>
 #include <fstream>
 #include <iostream>
@@ -24,6 +29,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+using namespace seqan;
 
 #define PERCORECACHE (1024 * 1024)
 #define TIMESTEP
@@ -401,7 +408,7 @@ double estimateMemory(const BELLApars & b_pars)
 	return free_memory;
 }
 
-void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
+void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
 					const BELLApars & b_pars, double ratioPhi, int count, stringstream & myBatch, size_t & outputted,
 					size_t & numBasesAlignedTrue, size_t & numBasesAlignedFalse, bool & passed)
 {
@@ -409,10 +416,10 @@ void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1,
 
 	// {begin/end}Position{V/H}: Returns the begin/end position of the seed in the query (vertical/horizonral direction)
 	// these four return seqan:Tposition objects
-	int begpV = getBeginPositionV(maxseed);
-	int endpV = getEndPositionV(maxseed);	
-	int begpH = getBeginPositionH(maxseed);
-	int endpH = getEndPositionH(maxseed);
+	int begpV = beginPositionV(maxseed);
+	int endpV = endPositionV(maxseed);	
+	int begpH = beginPositionH(maxseed);
+	int endpH = endPositionH(maxseed);
 
 	// get references for better naming
 	const string& seq1 = read1.seq;
@@ -462,7 +469,7 @@ void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1,
 	{
 		if(!b_pars.outputPaf)  // BELLA output format
 		{
-			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.first << '\t' << (double)maxExtScore.score.second/(double)ov:quality << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
+			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.first << '\t' << (double)maxExtScore.score.second/(double)ov << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
 				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
 				// column seq name
 				// row seq name
@@ -569,7 +576,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				numAlignmentsThread++;
 				readLengthsThread = readLengthsThread + seq1len + seq2len;
 #endif
-				loganResult maxExtScore;
+				seqAnResult maxExtScore;
 				bool passed = false;
 
 				if(val->count == 1)
@@ -594,7 +601,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 					}
 				}
 #ifdef TIMESTEP
-			numBasesAlignedThread += getEndPositionV(maxExtScore.seed)-getBeginPositionV(maxExtScore.seed);
+			numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
 #endif
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file
