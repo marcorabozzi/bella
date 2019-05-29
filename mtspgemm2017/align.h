@@ -95,7 +95,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 	Dna5String seedH;
 	Dna5String seedV;
 	std::string strand;
-	std::pair<int, int> temp;
+	//std::pair<int, int> temp;
 	std::pair<int, int> longestExtensionTemp;
 	seqAnResult longestExtensionScore;
 	//loganResult result;
@@ -156,7 +156,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 	//	longestExtensionScore.seed = seed;
 	//	longestExtensionScore.strand = strand;
 
-	longestExtensionScore.score = temp;
+	longestExtensionScore.score = longestExtensionTemp;
 	longestExtensionScore.seed = seed;
 	longestExtensionScore.strand = strand;
 
