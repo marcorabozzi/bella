@@ -119,27 +119,26 @@ T* prefixsum(T* in, int size, int nthreads)
 void toPAF(int& begpV, int& endpV, const int lenV, int& begpH, int& endpH, const int lenH, const string& rev)
 {
 	/* first, extend to the end of the sequences */
-	if(begpH < begpV)
-	{
-		begpV = begpV - begpH;
-		begpH = 0;
-	}
-	else
-	{
-		begpH = begpH - begpV;
-		begpV = 0;
-	}
-
-	if((lenH - endpH) < (lenV - endpV))
-	{
-		endpV = endpV + (lenH - endpH);
-		endpH = lenH;
-	}
-	else
-	{
-		endpH = endpH + (lenV - endpV);
-		endpV = lenV;
-	}
+	//if(begpH < begpV)
+	//{
+	//	begpV = begpV - begpH;
+	//	begpH = 0;
+	//}
+	//else
+	//{
+	//	begpH = begpH - begpV;
+	//	begpV = 0;
+	//}
+	//if((lenH - endpH) < (lenV - endpV))
+	//{
+	//	endpV = endpV + (lenH - endpH);
+	//	endpH = lenH;
+	//}
+	//else
+	//{
+	//	endpH = endpH + (lenV - endpV);
+	//	endpV = lenV;
+	//}
 
 	/* second, (possibly) convert back the seqH seed position according to the original strand */
 	if(rev == "c")
@@ -487,7 +486,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		else    // PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
 		{
 			/* field adjustment to match the PAF format */
-			//toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
+			toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
 			/* re-compute overlap estimation with extended alignment to the edges */
 			diffCol = endpV - begpV;
 			diffRow = endpH - begpH;
