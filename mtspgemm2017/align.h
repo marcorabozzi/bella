@@ -2,8 +2,8 @@
 #define _ALIGNMENT_H_
 
 #include "../logan/src/simd/score.h"
-#include "../logan/src/simd/simd_utils.h"
-#include "../logan/src/simd/logan_xa.h"
+#include "../logan/src/simd/simd_utils_affine_int8.h"
+#include "../logan/src/simd/logan_xa_affine_int8.h"
 #include "common.h"
 #include <omp.h>
 #include <fstream>
@@ -125,16 +125,16 @@ loganResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		//	setEndPositionH(seed, i+kmer_len);
 		//	setEndPositionV(seed, j+kmer_len);
 
-		LoganSetBeginPositionH(seedLogan, i);
-		LoganSetBeginPositionV(seedLogan, j);
-		LoganSetEndPositionH(seedLogan, i + kmer_len);
-		LoganSetEndPositionV(seedLogan, j + kmer_len);
+		setBeginPositionH(seedLogan, i);
+		setBeginPositionV(seedLogan, j);
+		setEndPositionH(seedLogan, i + kmer_len);
+		setEndPositionV(seedLogan, j + kmer_len);
 
 		/* Perform match extension */
 		//	longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
 		//	std::cout << longestExtensionTemp << std::endl;
 
-		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop, kmer_len);
+		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, cpyrow, col, scoringSchemeLogan, xdrop);//, kmer_len);
 
 	}
 	 else
@@ -142,7 +142,7 @@ loganResult alignSeqAn(const std::string & row, const std::string & col, int rle
 		//	longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
 		//	std::cout << longestExtensionTemp << std::endl;
 		strand = 'n';
-		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop, kmer_len);
+		temp = LoganXDrop(seedLogan, LOGAN_EXTEND_BOTH, row, col, scoringSchemeLogan, xdrop);//, kmer_len);
 	} 
 
 	//	longestExtensionScore.score = longestExtensionTemp;

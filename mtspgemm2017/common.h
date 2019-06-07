@@ -13,7 +13,7 @@ extern "C" {
 
 #include <x86intrin.h>
 #include "../libcuckoo/cuckoohash_map.hh"
-#include "../logan/src/simd/utils.h"
+#include "../logan/src/simd/utils_affine_int8.h"
 
 struct BELLApars
 {

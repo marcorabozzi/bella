@@ -7,7 +7,7 @@
 #include "../kmercode/common.h"
 #include "../kmercode/fq_reader.h"
 #include "../kmercode/ParallelFASTQ.h"
-#include "../logan/src/simd/logan_xa.h"
+#include "../logan/src/simd/logan_xa_affine_int8.h"
 #include <omp.h>
 #include <fstream>
 #include <iostream>
