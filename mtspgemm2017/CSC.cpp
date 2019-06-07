@@ -297,7 +297,8 @@ void CSC<IT,NT>::MergeDuplicates (AddOperation addop)
 
     if(nnz > 0)
     {
-        #pragma omp parallel for
+
+      #pragma omp parallel for
         for(int i=0; i<cols; ++i)
         {
             for(size_t j=colptr[i]; j<colptr[i+1]; ++j)
