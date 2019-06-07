@@ -1,6 +1,12 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#include <seqan/sequence.h>
+#include <seqan/align.h>
+#include <seqan/score.h>
+#include <seqan/modifier.h>
+#include <seqan/seeds.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +47,13 @@ template <typename T>
 }
 
 typedef SeedL TSeedLogan;
+typedef seqan::Seed<seqan::Simple> TSeed;
+
+struct seqAnResult {
+    std::pair<int, int> score;
+    std::string strand;
+    TSeed seed;
+};
 
 struct loganResult {
     std::pair<int, int> score;

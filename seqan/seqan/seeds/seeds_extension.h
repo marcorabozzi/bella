@@ -617,8 +617,14 @@ _extendSeedGappedXDropOneDirectionLimitScoreMismatch(Score<TScoreValue, Simple> 
     setScoreMismatch(scoringScheme, std::max(scoreMismatch(scoringScheme), minErrScore));
 }
 
+
+template <typename T,typename U>                                                   
+std::pair<T,U> operator+(const std::pair<T,U> & l,const std::pair<T,U> & r) {   
+    return {l.first+r.first,l.second+r.second};                                    
+}                                                                                  
+
 template<typename TConfig, typename TQuerySegment, typename TDatabaseSegment, typename TScoreValue, typename TScoreSpec>
-TScoreValue
+std::pair<TScoreValue, TScoreValue>
 _extendSeedGappedXDropOneDirection(
         Seed<Simple, TConfig> & seed,
         TQuerySegment const & querySeg,
@@ -633,7 +639,7 @@ _extendSeedGappedXDropOneDirection(
     TSize cols = length(querySeg)+1;
     TSize rows = length(databaseSeg)+1;
     if (rows == 1 || cols == 1)
-        return 0;
+        return std::make_pair(0,0);
 
     TScoreValue len = 2 * _max(cols, rows); // number of antidiagonals
     TScoreValue const minErrScore = std::numeric_limits<TScoreValue>::min() / len; // minimal allowed error penalty
@@ -665,6 +671,8 @@ _extendSeedGappedXDropOneDirection(
     TSize antiDiagNo = 1; // the currently calculated anti-diagonal
 
     TScoreValue best = 0; // maximal score value in the DP matrix (for drop-off calculation)
+    TScoreValue prev = 0; // maximal score value in the DP matrix (for drop-off calculation)
+    TScoreValue matches = 0; // number of matches
 
     TDiagonal lowerDiag = 0;
     TDiagonal upperDiag = 0;
@@ -702,6 +710,7 @@ _extendSeedGappedXDropOneDirection(
             TScoreValue tmp = _max(antiDiag2[i2-1], antiDiag2[i2]) + gapCost;
             tmp = _max(tmp, antiDiag1[i1 - 1] + score(scoringScheme, sequenceEntryForScore(scoringScheme, querySeg, queryPos),
                                                       sequenceEntryForScore(scoringScheme, databaseSeg, dbPos)));
+
             if (tmp < best - scoreDropOff)
             {
                 antiDiag3[i3] = undefined;
@@ -712,7 +721,15 @@ _extendSeedGappedXDropOneDirection(
                 antiDiagBest = _max(antiDiagBest, tmp);
             }
         }
+
         best = _max(best, antiDiagBest);
+
+        if(antiDiagBest > prev)
+        {
+            matches++;
+        }
+
+        prev = antiDiagBest;
 
         // Calculate new minCol and minCol
         while (minCol - offset3 < length(antiDiag3) && antiDiag3[minCol - offset3] == undefined &&
@@ -781,11 +798,11 @@ _extendSeedGappedXDropOneDirection(
     // update seed
     if (longestExtensionScore != undefined)
         _updateExtendedSeed(seed, direction, longestExtensionCol, longestExtensionRow, lowerDiag, upperDiag);
-    return longestExtensionScore;
+    return std::make_pair(longestExtensionScore, matches);
 }
 
 template <typename TConfig, typename TDatabase, typename TQuery, typename TScoreValue, typename TScoreSpec>
-inline int
+inline std::pair<int, int>
 extendSeed(Seed<Simple, TConfig> & seed,
            TDatabase const & database,
            TQuery const & query,
@@ -807,9 +824,9 @@ extendSeed(Seed<Simple, TConfig> & seed,
     SEQAN_ASSERT_LT(scoreGapOpen(scoringScheme), 0);
     SEQAN_ASSERT_LT(scoreGapExtend(scoringScheme), 0);
     SEQAN_ASSERT_EQ(scoreGapExtend(scoringScheme), scoreGapOpen(scoringScheme));
-    TScoreValue longestExtensionScoreLeft  = 0;
-    TScoreValue longestExtensionScoreRight = 0;
-    TScoreValue longestExtensionScore;
+    std::pair<TScoreValue, TScoreValue> longestExtensionScoreLeft(0,0);
+    std::pair<TScoreValue, TScoreValue> longestExtensionScoreRight(0,0);
+    std::pair<TScoreValue, TScoreValue> longestExtensionScore(kmerLen,0);
 
     if (direction == EXTEND_LEFT || direction == EXTEND_BOTH)
     {
@@ -822,12 +839,9 @@ extendSeed(Seed<Simple, TConfig> & seed,
         TDatabasePrefix databasePrefix = prefix(database, beginPositionH(seed));
         TQueryPrefix queryPrefix = prefix(query, beginPositionV(seed));
 
-        //std::cout << beginPositionH(seed) << std::endl;
-        //std::cout << databasePrefix << std::endl;
-
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreLeft = _extendSeedGappedXDropOneDirection(seed, queryPrefix, databasePrefix, EXTEND_LEFT, scoringScheme, scoreDropOff);
-        //std::cout << beginPositionH(seed) << std::endl;
+        //std::cout << endPositionH(seed) << std::endl;
     }
 
     if (direction == EXTEND_RIGHT || direction == EXTEND_BOTH)
@@ -844,9 +858,17 @@ extendSeed(Seed<Simple, TConfig> & seed,
         // TODO(holtgrew): Update _extendSeedGappedXDropOneDirection and switch query/database order.
         longestExtensionScoreRight =  _extendSeedGappedXDropOneDirection(seed, querySuffix, databaseSuffix, EXTEND_RIGHT, scoringScheme, scoreDropOff);
     }
-    
-    longestExtensionScore = longestExtensionScoreRight + longestExtensionScoreLeft;
-    return (int)(longestExtensionScore + kmerLen);
+
+    longestExtensionScore = longestExtensionScoreRight + longestExtensionScoreLeft; 
+    longestExtensionScore = longestExtensionScore + std::make_pair(kmerLen, kmerLen);
+
+    int diffCol = endPositionV(seed) - beginPositionV(seed);
+    int diffRow = endPositionH(seed) - beginPositionH(seed);
+    int minLeft = min(beginPositionV(seed), beginPositionH(seed));
+    int minRight = min(length(query) - endPositionV(seed), length(database) - endPositionH(seed));
+    int ov = minLeft+minRight+(diffCol+diffRow)/2;
+
+    return longestExtensionScore;
     // TODO(holtgrew): Update seed's score?!
 }
 
