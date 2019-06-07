@@ -8,7 +8,6 @@
 #include "../kmercode/fq_reader.h"
 #include "../kmercode/ParallelFASTQ.h"
 #include "../logan/src/simd/logan_xa_affine_int8.h"
-#include "../logan/src/simd/logan_xa.h"
 #include <omp.h>
 #include <fstream>
 #include <iostream>
@@ -25,8 +24,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-using namespace seqan;
 
 #define PERCORECACHE (1024 * 1024)
 #define TIMESTEP
@@ -115,26 +112,27 @@ T* prefixsum(T* in, int size, int nthreads)
 void toPAF(int& begpV, int& endpV, const int lenV, int& begpH, int& endpH, const int lenH, const string& rev)
 {
 	/* first, extend to the end of the sequences */
-	//if(begpH < begpV)
-	//{
-	//	begpV = begpV - begpH;
-	//	begpH = 0;
-	//}
-	//else
-	//{
-	//	begpH = begpH - begpV;
-	//	begpV = 0;
-	//}
-	//if((lenH - endpH) < (lenV - endpV))
-	//{
-	//	endpV = endpV + (lenH - endpH);
-	//	endpH = lenH;
-	//}
-	//else
-	//{
-	//	endpH = endpH + (lenV - endpV);
-	//	endpV = lenV;
-	//}
+	if(begpH < begpV)
+	{
+		begpV = begpV - begpH;
+		begpH = 0;
+	}
+	else
+	{
+		begpH = begpH - begpV;
+		begpV = 0;
+	}
+
+	if((lenH - endpH) < (lenV - endpV))
+	{
+		endpV = endpV + (lenH - endpH);
+		endpH = lenH;
+	}
+	else
+	{
+		endpH = endpH + (lenV - endpV);
+		endpV = lenV;
+	}
 
 	/* second, (possibly) convert back the seqH seed position according to the original strand */
 	if(rev == "c")
@@ -403,7 +401,7 @@ double estimateMemory(const BELLApars & b_pars)
 	return free_memory;
 }
 
-void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
+void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1, const readType_ & read2, 
 					const BELLApars & b_pars, double ratioPhi, int count, stringstream & myBatch, size_t & outputted,
 					size_t & numBasesAlignedTrue, size_t & numBasesAlignedFalse, bool & passed)
 {
@@ -411,10 +409,10 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 
 	// {begin/end}Position{V/H}: Returns the begin/end position of the seed in the query (vertical/horizonral direction)
 	// these four return seqan:Tposition objects
-	int begpV = beginPositionV(maxseed);
-	int endpV = endPositionV(maxseed);	
-	int begpH = beginPositionH(maxseed);
-	int endpH = endPositionH(maxseed);
+	int begpV = getBeginPositionV(maxseed);
+	int endpV = getEndPositionV(maxseed);	
+	int begpH = getBeginPositionH(maxseed);
+	int endpH = getEndPositionH(maxseed);
 
 	// get references for better naming
 	const string& seq1 = read1.seq;
@@ -433,7 +431,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
 		double newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
 		// second is the exit score, first is the best score
-		if((double)maxExtScore.score.first > newThr)
+		if((double)maxExtScore.score.second > newThr)
 		{
 			if(b_pars.alignEnd)
 			{
@@ -447,7 +445,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 		}
 	}
 	// second is the exit score, first is the best score
-	else if(maxExtScore.score.first > b_pars.defaultThr)
+	else if(maxExtScore.score.second > b_pars.defaultThr)
 	{
 		if(b_pars.alignEnd)
 		{
@@ -462,12 +460,24 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 
 	if(passed)
 	{
-		if(!b_pars.outputPaf)	// BELLA output format
+		if(!b_pars.outputPaf)  // BELLA output format
 		{
-			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.first << '\t' << (double)maxExtScore.score.second/(double)ov << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
+			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
 				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
+				// column seq name
+				// row seq name
+				// number of shared k-mer
+				// alignment score
+				// overlap estimation
+				// strand (n/c)
+				// column seq start
+				// column seq end
+				// column seq length
+				// row seq start
+				// row seq end
+				// row seq length
 		}
-		else 	// PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
+		else    // PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
 		{
 			/* field adjustment to match the PAF format */
 			toPAF(begpV, endpV, read2len, begpH, endpH, read1len, maxExtScore.strand);
@@ -486,7 +496,19 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 			// If PAF is generated from an alignment, column 10 equals the number of sequence matches, 
 			// and column 11 equals the total number of sequence matches, mismatches, insertions and deletions in the alignment     
 			myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
-				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << (int)(ov*(1 - (ratioPhi*(1-b_pars.deltaChernoff)))) << '\t' << ov << '\t' << mapq << endl;
+				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score.second << '\t' << ov << '\t' << mapq << endl;
+				// column seq name
+				// column seq length
+				// column seq start
+				// column seq end
+				// strand (+/-)
+				// row seq name
+				// row seq length
+				// row seq start
+				// row seq end
+				// number of residue matches (alignment score)
+				// alignment block length (overlap length)
+				// mapping quality (0-255; 255 for missing)
 		}
 		++outputted;
 		numBasesAlignedTrue += (endpV-begpV);	
@@ -499,7 +521,7 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 
 template <typename IT, typename FT>
 auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowids, FT * values, const readVector_ & reads, 
-								int kmerSize, int xdrop, char* filename, const BELLApars & b_pars, double ratioPhi)
+								int kmer_len, int xdrop, char* filename, const BELLApars & b_pars, double ratioPhi)
 {
 	size_t alignedpairs = 0;
 	size_t alignedbases = 0;
@@ -535,7 +557,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 			size_t cid = j;                 // column id
 			const string& seq1 = reads[rid].seq;	// get reference for readibility
 			const string& seq2 = reads[cid].seq;	// get reference for readibility
-
+				
 			int seq1len = seq1.length();
 			int seq2len = seq2.length();
 
@@ -547,128 +569,32 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				numAlignmentsThread++;
 				readLengthsThread = readLengthsThread + seq1len + seq2len;
 #endif
-				//seqAnResult maxExtScore;
-				ksw2Result result;
+				loganResult maxExtScore;
 				bool passed = false;
 
-				//if(val->count == 1)
-				//{
-				//	auto it = val->pos.begin();
-				//	int seed1start = it->first, seed2start = it->second;
-				//	int seq1start, subseq1len, seq2start, subseq2len;
-
-				//	const DnaSequence seed1seq = seq1.substr(seed1start, kmerSize);
-				//	const DnaSequence seed2seq = seq2.substr(seed2start, kmerSize);
-
-				//	if(seed1seq != seed2seq)
-				//	{
-				//		// reverse seq1
-				//		// update position seq1
-				//		if(seed1start > seed2start)
-				//		{
-				//			seq1start = seq1start - seq2start;
-				//			seq2start = 0;
-				//		}
-				//		else
-				//		{
-				//			seq2start = seq2start - seq1start;
-				//			seq1start = 0;
-				//		}
-				//	}
-				//	else
-				//	{
-				//		if(seed1start > seed2start)
-				//		{
-				//			seq1start = seq1start - seq2start;
-				//			seq2start = 0;
-				//		}
-				//		else
-				//		{
-				//			seq2start = seq2start - seq1start;
-				//			seq1start = 0;
-				//		}
-				//	}
-
-				//	result = kswAlign(seq1, seq1start, seq1len,
-				//						seq2, seq2start, seq2len,
-				//							1, -1, 0, -1, false, kmerSize);
-
-				//	//maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmerSize);
-				//	//PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-				//	PostAlignDecision(result, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-				//}
-				//else
-				if(val->count > 1)
+				if(val->count == 1)
 				{
-					//for(auto it = val->pos.begin(); it != val->pos.end(); ++it) // if !b_pars.allKmer this should be at most two cycle
-					//{
-					auto front = val->pos.front();
-					auto back  = val->pos.back();
+					auto it = val->pos.begin();
+					int i = it->first, j = it->second;
 
-					int ovp1begin = front->first;	// first seed position on seq1
-					int ovp2begin = front->second;	// first seed position on seq2
-
-					int ovp1end = back->first  + kmerSize - 1;	// lest seed position on seq1
-					int ovp2end = back->second + kmerSize - 1;	// lest seed position on seq2
-
-					int ovp1range, ovp2range;
-					const DnaSequence ovp1, ovp2;
-
-					const std::string seed1 = seq1.substr(ovp1begin, kmerSize);
-					const std::string seed2 = seq2.substr(ovp2begin, kmerSize);
-
-					if(seed1 != seed2)
+					maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
+					PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+				}
+				else
+				{
+					for(auto it = val->pos.begin(); it != val->pos.end(); ++it) // if !b_pars.allKmer this should be at most two cycle
 					{
-						// reverse seq1
-						std::string seq1rc = seq1;	// reverse complement
-						std::reverse(seq1rc.begin(), seq1rc.end());
+						int i = it->first, j = it->second;
 
-						std::transform(
-							std::begin(seq1rc),
-							std::end(seq1rc),
-							std::begin(seq1rc),
-						revComplement);
+						maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
+						PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
 
-						// update ovp1
-						int tmp = ovp1begin;
-						//ovp1begin = seq1len - ovp1begin - kmerSize + 1; // bug to fix in master
-						ovp1begin = seq1len - ovp1end;
-						ovp1end   = seq1len - tmp;
-
-						ovp1range = ovp1end - ovp1begin; 	// overlap length on seq1
-						ovp2range = ovp2end - ovp2begin; 	// overlap length on seq1
-
-						ovp1(seq1rc.substr(ovp1begin, ovp1range));
-						ovp2(seq2.substr(ovp2begin, ovp1range));
-
-						result = kswAlign(ovp1, ovp1begin, ovp1range,
-											ovp2, ovp2begin, ovp2range,
-												1, -1, 0, -1, false, kmerSize);
-
-						PostAlignDecision(result, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+						if(passed)
+							break;
 					}
-					else
-					{
-						ovp1range = (back->first  + kmerSize - 1) - ovp1begin; 	// overlap length on seq1
-						ovp2range = (back->second + kmerSize - 1) - ovp2begin;	// overlap length on seq2
-
-						ovp1(seq1.substr(ovp1begin, ovp1range));
-						ovp2(seq2.substr(ovp2begin, ovp2range));
-
-						result = kswAlign(ovp1, ovp1begin, ovp1range,
-											ovp2, ovp2begin, ovp2range,
-												1, -1, 0, -1, false, kmerSize);
-
-						PostAlignDecision(result, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-					}
-					//maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmerSize);
-					//PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-					//if(passed)
-					//		break;
-					//}
 				}
 #ifdef TIMESTEP
-			numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
+			numBasesAlignedThread += getEndPositionV(maxExtScore.seed)-getBeginPositionV(maxExtScore.seed);
 #endif
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file
@@ -739,7 +665,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
  **/
 template <typename IT, typename NT, typename FT, typename MultiplyOperation, typename AddOperation>
 void HashSpGEMM(const CSC<IT,NT> & A, const CSC<IT,NT> & B, MultiplyOperation multop, AddOperation addop, const readVector_ & reads, 
-	FT & getvaluetype, int kmerSize, int xdrop, char* filename, const BELLApars & b_pars, double ratioPhi)
+	FT & getvaluetype, int kmer_len, int xdrop, char* filename, const BELLApars & b_pars, double ratioPhi)
 {
 	double free_memory = estimateMemory(b_pars);
 
@@ -824,7 +750,7 @@ void HashSpGEMM(const CSC<IT,NT> & A, const CSC<IT,NT> & B, MultiplyOperation mu
 		delete [] ValuesofC;
 
 		tuple<size_t, size_t, size_t, size_t, size_t, size_t, double> alignstats; // (alignedpairs, alignedbases, totalreadlen, outputted, alignedtrue, alignedfalse, timeoutputt)
-		alignstats = RunPairWiseAlignments(colStart[b], colStart[b+1], begnz, colptrC, rowids, values, reads, kmerSize, xdrop, filename, b_pars, ratioPhi);
+		alignstats = RunPairWiseAlignments(colStart[b], colStart[b+1], begnz, colptrC, rowids, values, reads, kmer_len, xdrop, filename, b_pars, ratioPhi);
 
 #ifdef TIMESTEP
 		if(!b_pars.skipAlignment)
