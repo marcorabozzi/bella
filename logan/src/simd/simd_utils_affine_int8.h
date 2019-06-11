@@ -17,33 +17,32 @@
 #define VECTORWIDTH  (32)
 #define LOGICALWIDTH (VECTORWIDTH - 1)
 #define vector_t    __m256i
-#define add_func    _mm256_adds_epi8  // saturated arithmetic
-#define sub_func    _mm256_subs_epi8  // saturated arithmetic
-#define max_func    _mm256_max_epi8   // max
-#define set1_func   _mm256_set1_epi8  // set1 operation
-#define blendv_func _mm256_blendv_epi8 // blending operation
-#define cmpeq_func  _mm256_cmpeq_epi8 // compare equality operation
+#define add_func    _mm256_adds_epi8   // saturated arithmetic
+#define sub_func    _mm256_subs_epi8   // saturated arithmetic
+#define max_func    _mm256_max_epi8    // max
+#define set1_func   _mm256_set1_epi8   // set1 operation
+#define blend_func  _mm256_blendv_epi8 // blending operation
+#define cmpeq_func  _mm256_cmpeq_epi8  // compare equality operation
 #elif __SSE4_2__ 	// Compile flag: -msse4.2
-#define VECTORWIDTH  (8)
+#define VECTORWIDTH  (16)
 #define LOGICALWIDTH (VECTORWIDTH - 1)
 #define vector_t    __m128i
-#define add_func    _mm_adds_epi16 	// saturated arithmetic
-#define max_func    _mm_max_epi16  	// max
-#define set1_func   _mm_set1_epi16  // set1 operation
-#define blendv_func _mm_blendv_epi8 // blending operation
-#define cmpeq_func  _mm_cmpeq_epi16 // compare equality operation
+#define add_func    _mm_adds_epi8 	// saturated arithmetic
+#define max_func    _mm_max_epi8  	// max
+#define set1_func   _mm_set1_epi8   // set1 operation
+#define blend_func  _mm_blendv_epi8 // blending operation
+#define cmpeq_func  _mm_cmpeq_epi8  // compare equality operation
 #endif
 
 //======================================================================================
 // GLOBAL VARIABLE DEFINITION
 //======================================================================================
 
-#define NINF  	(std::numeric_limits<int8_t>::min())
-#define myRIGHT (0)
-#define myDOWN  (1)
-#define MIDDLE 	(LOGICALWIDTH / 2)
-
-#define RED_THRESHOLD	(std::numeric_limits<int8_t>::max() - 25)
+#define NINF  		(std::numeric_limits<int8_t>::min())
+#define myRIGHT 	(0)
+#define myDOWN  	(1)
+#define INTLIMIT	((std::numeric_limits<int8_t>::max()) - 25)
+#define MIDDLE 		(LOGICALWIDTH / 2)
 
 //======================================================================================
 // SIMD UTILS
@@ -76,7 +75,8 @@ print_vector_d(vector_t a) {
 
 	printf("{");
 	for (int i = 0; i < VECTORWIDTH-1; ++i)
-		printf("%d,", tmp.elem[i]);
+		//printf("%d,", tmp.elem[i]);
+		std::cout << (int)tmp.elem[i] << ",";
 	printf("%d}\n", tmp.elem[VECTORWIDTH-1]);
 }
 

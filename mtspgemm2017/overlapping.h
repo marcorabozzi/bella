@@ -427,6 +427,11 @@ void PostAlignDecision(const loganResult & maxExtScore, const readType_ & read1,
 	int minRight = min(read2len - endpV, read1len - endpH);
 	int ov = minLeft+minRight+(diffCol+diffRow)/2;
 
+//#pragma omp critical
+//	{
+//		std::cout << maxExtScore.score.first << ' ' << ov << std::endl;
+//	}
+
 	if(b_pars.adapThr)
 	{
 		double newThr = (1-b_pars.deltaChernoff)*(ratioPhi*(double)ov);
@@ -576,19 +581,22 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				{
 					auto it = val->pos.begin();
 					int i = it->first, j = it->second;
-
+#pragma omp critical
+					{
 					maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
 					PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
+}
 				}
 				else
 				{
 					for(auto it = val->pos.begin(); it != val->pos.end(); ++it) // if !b_pars.allKmer this should be at most two cycle
 					{
 						int i = it->first, j = it->second;
-
+#pragma omp critical
+						{
 						maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
 						PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
-
+}
 						if(passed)
 							break;
 					}

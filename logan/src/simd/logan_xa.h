@@ -220,16 +220,16 @@ LoganOneDirection
 
 		// antiDiag swap, offset updates, and new base load
 		// TODO : optimize this
-		//int maxpos, max = 0;
-		//for(int i = 0; i < VECTORWIDTH; ++i)
-		//	if(antiDiag3.elem[i] > max)
-		//	{
-		//		maxpos = i;
-		//		max = antiDiag3.elem[i];
-		//	}
-//
-		//if(maxpos > MIDDLE)
-		if(antiDiag3.elem[0] < antiDiag3.elem[VECTORWIDTH - 1])
+		int maxpos, max = 0;
+		for(int i = 0; i < VECTORWIDTH; ++i)
+			if(antiDiag3.elem[i] > max)
+			{
+				maxpos = i;
+				max = antiDiag3.elem[i];
+			}
+
+		if(maxpos > MIDDLE)
+		//if(antiDiag3.elem[0] < antiDiag3.elem[VECTORWIDTH - 1])
 		{
 			#ifdef DEBUGLOGAN
 			printf("myRIGHT\n");

@@ -14,8 +14,8 @@
 #include <assert.h>
 #include <iterator>
 #include <x86intrin.h>
-#include "logan_xa.h"
-#include "logan_ga.h"
+#include "logan_xa_affine_int8.h"
+//#include "logan_ga.h"
 
 //======================================================================================
 // SEQUENCE GENERATION (source: https://github.com/ocxtal/libgaba)
@@ -95,9 +95,9 @@ int main(int argc, char const *argv[])
 	double substs = 0.03; // substitution probability
 
 	/* Penalties (LOGAN temporarily supports only linear gap penalty) */
-	short match    =  1;
-	short mismatch = -1;
-	short gap 	   = -1;
+	int8_t match    =  1;
+	int8_t mismatch = -1;
+	int8_t gap 	   = -1;
 
 	/* Initialize scoring scheme */
 	ScoringSchemeL penalties(match, mismatch, gap);
@@ -116,7 +116,7 @@ int main(int argc, char const *argv[])
 	SeedL seed(0, 0, k);
 
 	/* result.first = best score, result.second = exit score when (if) x-drop termination is satified */
-	std::pair<short, short> result_x; 
+	std::pair<int, int> result_x; 
 
 	//======================================================================================
 	// LOGAN (X-Drop Adaptive Banded Alignment)
@@ -129,9 +129,9 @@ int main(int argc, char const *argv[])
 	// LOGAN (Global Adaptive Banded Alignment)
 	//======================================================================================
 
-	std::pair<short, short> result_g; 
-	result_g = LoganGlobal(seq1, seq2, penalties);
-	std::cout << "Best score : " << result_g.first << "\tGlobal score : " << result_g.second << std::endl;
+	//std::pair<short, short> result_g; 
+	//result_g = LoganGlobal(seq1, seq2, penalties);
+	//std::cout << "Best score : " << result_g.first << "\tGlobal score : " << result_g.second << std::endl;
 
 	return 0;
 }
