@@ -32,7 +32,7 @@ double adaptiveSlope(double error)
     double p_mat = pow(1-error,2);  // match
     double p_mis = 1-p_mat;         // mismatch/gap
     double alpha = 1;               // match penalty
-    double beta = 1;                // mismatch/gap penalty
+    double beta  = 0;               // mismatch/gap penalty
 
     return alpha*p_mat - beta*p_mis;
 }
@@ -65,7 +65,7 @@ bool toEnd(int colStart, int colEnd, int colLen, int rowStart, int rowEnd, int r
  */
 seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xdrop, int kmer_len) {
 
-    Score<int, Simple> scoringScheme(1,-1,-1);
+    Score<int, Simple> scoringScheme(1,0,0);
 
     Dna5String seqH(row); 
     Dna5String seqV(col); 

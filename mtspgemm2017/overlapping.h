@@ -470,6 +470,11 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
 	{
         if(!b_pars.outputPaf)  // BELLA output format
         {
+//#pragma omp critical 
+//    {       
+        int alnlen = ((endpV - begpV) + (endpH - begpH)) / 2;
+        std::cout << alnlen << '\t' << maxExtScore.score << '\t' << ((double)maxExtScore.score/(double)alnlen)*100 << std::endl;
+//    }
             myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
                 begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
                 // column seq name
@@ -492,9 +497,11 @@ void PostAlignDecision(const seqAnResult & maxExtScore, const readType_ & read1,
             /* re-compute overlap estimation with extended alignment to the edges */
             diffCol = endpV - begpV;
             diffRow = endpH - begpH;
-            minLeft = min(begpV, begpH);
-            minRight = min(read2len - endpV, read1len - endpH);
-            ov = minLeft+minRight+(diffCol+diffRow)/2;
+            //minLeft = min(begpV, begpH);
+            //minRight = min(read2len - endpV, read1len - endpH);
+            //ov = minLeft+minRight+(diffCol+diffRow)/2;
+            ov = ((endpV - begpV) + (endpH - begpH)) / 2;
+            //std::cout << alnlen << '\t' << maxExtScore.score << '\t' << ((double)maxExtScore.score/(double)alnlen)*100 << std::endl;
 
             string pafstrand;       // maxExtScore not modifiable   
             int mapq = 255;         // mapping quality (0-255; 255 for missing)         
@@ -597,8 +604,8 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
                         maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, xdrop, kmer_len);
                         PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratioPhi, val->count, vss[ithread], outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed);
 
-                        if(passed)
-                            break;
+                        //if(passed)
+                        //    break;
                     }
                 }
 #ifdef TIMESTEP
