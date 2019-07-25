@@ -27,6 +27,31 @@
 using namespace seqan;
 using namespace std;
 
+typedef Align<Dna5String, ArrayGaps> TAlign;     // align type
+
+TSeed retrieveSeed(TAlign &align)
+{
+    unsigned int start[2] = {0};
+    unsigned int end[2] = {0};
+
+    for(int seq_id = 0; seq_id < 2; seq_id++) {
+        unsigned int pos = 0;
+        bool started = false;
+        for (auto gap: row(align, seq_id)) {
+            if(gap != '-') {
+                started = true;
+                end[seq_id] = pos;
+            }
+            if (!started) {
+                start[seq_id]++;
+            }
+            pos++;
+        }
+    }
+
+    return TSeed(start[0], end[0], start[1], end[1]);
+}
+
 double adaptiveSlope(double error)
 {
     double p_mat = pow(1-error,2);  // match
@@ -67,8 +92,8 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 
     Score<int, Simple> scoringScheme(1,-1,-1);
 
-    Dna5String seqH(row); 
-    Dna5String seqV(col); 
+    Dna5String seqH(row);
+    Dna5String seqV(col);
     Dna5String seedH;
     Dna5String seedV;
     string strand;
@@ -83,6 +108,8 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
     /* we are reversing the "row", "col" is always on the forward strand */
     Dna5StringReverseComplement twin(seedH);
 
+    std::cout << row.length() << " " << col.length() << " " << row.length()*col.length() << std::endl;
+
     if(twin == seedV)
     {
         strand = 'c';
@@ -95,12 +122,24 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
         setEndPositionV(seed, j+kmer_len);
 
         /* Perform match extension */
-        longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+        //longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+        TAlign align;
+        resize(rows(align), 2);
+        assignSource(seqan::row(align, 0), twinRead);
+        assignSource(seqan::row(align, 1), seqV);
+        longestExtensionTemp = globalAlignment(align, scoringScheme, AlignConfig<true, true, true, true>(), LinearGaps());
+        seed = retrieveSeed(align);
 
     } else
     {
         strand = 'n';
-        longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+        //longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xdrop, kmer_len, GappedXDrop());
+        TAlign align;
+        resize(rows(align), 2);
+        assignSource(seqan::row(align, 0), seqH);
+        assignSource(seqan::row(align, 1), seqV);
+        longestExtensionTemp = globalAlignment(align, scoringScheme, AlignConfig<true, true, true, true>(), LinearGaps());
+        seed = retrieveSeed(align);
     } 
 
     longestExtensionScore.score = longestExtensionTemp;
